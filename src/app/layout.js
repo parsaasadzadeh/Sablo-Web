@@ -2,6 +2,8 @@ import './globals.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import RegisterSW from './register-sw';
 
+
+
 export const metadata = {
   title: "Sablo",
   description: "مدیریت هوشمند مالی",
