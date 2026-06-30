@@ -15,8 +15,8 @@ export const metadata = {
   keywords: ["مدیریت مالی", "بودجه‌بندی", "حسابداری شخصی", "Sablo"],
   authors: [{ name: "Sablo Team" }],
   icons: {
-    icon: "/icons/icon-192x192.png",
-    apple: "/icons/icon-192x192.png",
+    icon: "SabloIcon.png",
+    apple: "SabloIcon.png",
   },
   openGraph: {
     title: "Sablo | اپلیکیشن مدیریت مالی",
