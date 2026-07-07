@@ -18,8 +18,8 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("عمومی");
-  const [dueDate, setDueDate] = useState(""); 
+  const [category, setCategory] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -30,7 +30,6 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
 
     setFormLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const formattedDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
       await api.post("/finance/add", {
@@ -38,14 +37,11 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
         amount: Number(amount),
         title,
         description,
-        category,
+        category: category || undefined,
         dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
-      // ریست فیلدها و بستن کامپوننت مودال
-      setTitle(""); setAmount(""); setDescription(""); setDueDate(""); setCategory("عمومی");
+      setTitle(""); setAmount(""); setDescription(""); setDueDate(""); setCategory("");
       onClose();
       onRefreshData();
     } catch (error) {
@@ -62,10 +58,10 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
         .rmdp-input { width: 100% !important; height: 42px !important; border-radius: 0.75rem !important; background-color: rgb(255 251 235 / 0.5) !important; border-color: rgb(253 230 138) !important; font-size: 0.875rem !important; padding: 0.625rem 0.875rem !important; outline: none !important; }
         .rmdp-input:focus { border-color: #0F6F5C !important; }
       `}</style>
-      
+
       <div className="bg-white rounded-2xl w-full max-w-md p-6 border border-[#EDE8DC] shadow-xl">
         <h3 className="text-lg font-bold text-[#26241F] mb-4">ثبت تراکنش هوشمند</h3>
-        
+
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">نوع تراکنش</label>
@@ -85,7 +81,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
 
           {(type === "INCOME" || type === "EXPENSE") && (
             <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5">دسته‌بندی</label>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5">دسته‌بندی (اختیاری)</label>
               <input type="text" placeholder="مثال: خوراک، اجاره، حقوق..." value={category} onChange={(e) => setCategory(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
             </div>
           )}
