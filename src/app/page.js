@@ -4,7 +4,7 @@ import StatsSection from "@/components/landing/StatsSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CtaSection from "@/components/landing/CtaSection";
-import CtaSection from "@/components/landing/aboutsablo";
+import AboutSablo from "@/components/landing/aboutsablo";
 import Footer from "@/components/landing/Footer";
 
 export default function Home() {
@@ -23,7 +23,7 @@ export default function Home() {
         <StatsSection />
         <FeaturesSection />
         <TestimonialsSection />
-  <AboutSablo/>
+        <AboutSablo/>
         <CtaSection />
       </main>
 
