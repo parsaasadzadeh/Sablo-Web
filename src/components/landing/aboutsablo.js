@@ -16,7 +16,7 @@ export default function AboutSablo() {
   ];
 
   return (
-    <div dir="rtl" className="w-full bg-[#faf9f6] py-16 px-4 sm:px-6" style={{ fontFamily: "Vazirmatn, Tahoma, sans-serif" }}>
+    <div  className="  py-16 m-10 px-4 sm:px-6" >
       <div className="max-w-3xl mx-auto">
         {/* eyebrow badge, matching the pill badge style from the hero */}
         <div className="flex justify-center mb-5">
