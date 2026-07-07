@@ -69,7 +69,7 @@ export default function TransactionList({
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-semibold text-[#26241F]">{tx.title}</h4>
-                    {tx.category && <span className="bg-gray-100 text-gray-500 text-[9px] px-1.5 py-0.5 rounded-md">{tx.category}</span>}
+                   
                   </div>
                   {tx.description && <p className="text-xs text-[#8A8273] mt-0.5">{tx.description}</p>}
                   {tx.dueDate && tx.type === 'INSTALLMENT' && !tx.isPaid && (
