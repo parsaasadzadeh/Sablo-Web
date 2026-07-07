@@ -17,7 +17,7 @@ export default function Header() {
     <header className="border-b border-[#EDE8DC] bg-white/70 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">🧠</span>
+          <span className="text-2xl"></span>
           <span className="font-bold text-lg text-[#0F6F5C]">سابلو</span>
         </div>
 
