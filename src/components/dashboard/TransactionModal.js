@@ -18,7 +18,6 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
@@ -37,11 +36,10 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
         amount: Number(amount),
         title,
         description,
-        category: category || undefined,
         dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
       });
 
-      setTitle(""); setAmount(""); setDescription(""); setDueDate(""); setCategory("");
+      setTitle(""); setAmount(""); setDescription(""); setDueDate("");
       onClose();
       onRefreshData();
     } catch (error) {
@@ -78,13 +76,6 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">عنوان</label>
             <input type="text" placeholder="مثال: حقوق، خرید، وام مسکن" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
           </div>
-
-          {(type === "INCOME" || type === "EXPENSE") && (
-            <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5">دسته‌بندی (اختیاری)</label>
-              <input type="text" placeholder="مثال: خوراک، اجاره، حقوق..." value={category} onChange={(e) => setCategory(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
-            </div>
-          )}
 
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">مبلغ (ریال)</label>
