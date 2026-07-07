@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 
-// کامپوننت‌های تفکیک شده
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsGrid from "@/components/dashboard/StatsGrid";
 import TransactionList from "@/components/dashboard/TransactionList";
@@ -17,7 +16,6 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // استیت‌های داده
   const [stats, setStats] = useState({
     summary: { cashBalance: 0, totalIncome: 0, totalExpense: 0, activeDebt: 0, unpaidInstallmentsCount: 0, unpaidInstallmentsAmount: 0 },
     expenseCategories: []
@@ -26,8 +24,9 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // دریافت جامع داده‌ها از بک‌اندایند
-  const fetchFinanceData = async (page = 1) => {
+  // ⭐ حالا این تابع تنها نقطه‌ی ورودی برای فچ کردن داده‌هاست.
+  // دیگه هیچ useEffect ای روی currentPage گوش نمی‌ده، پس امکان دابل-فچ از بین می‌ره.
+  const fetchFinanceData = useCallback(async (page) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -37,9 +36,9 @@ export default function DashboardPage() {
 
       setLoading(true);
       const [statsRes, listRes, notifRes] = await Promise.all([
-        api.get("/finance/stats", { headers: { Authorization: `Bearer ${token}` } }),
-        api.get(`/finance/my-data?page=${page}&limit=10`, { headers: { Authorization: `Bearer ${token}` } }),
-        api.get("/notifications", { headers: { Authorization: `Bearer ${token}` } })
+        api.get("/finance/stats"),
+        api.get(`/finance/my-data?page=${page}&limit=10`),
+        api.get("/notifications")
       ]);
 
       setStats(statsRes.data);
@@ -57,16 +56,21 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
+  // فقط یک بار موقع mount اجرا می‌شه
   useEffect(() => {
-    fetchFinanceData(currentPage);
-  }, [currentPage]);
+    fetchFinanceData(1);
+  }, [fetchFinanceData]);
+
+  // ⭐ صفحه‌بندی حالا خودش صراحتاً فچ می‌زنه، نه از طریق useEffect
+  const handlePageChange = (page) => {
+    fetchFinanceData(page);
+  };
 
   const handleMarkAsRead = async (notifId) => {
     try {
-      const token = localStorage.getItem("token");
-      await api.put(`/notifications/${notifId}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/notifications/${notifId}/read`, {});
       setNotifications(prev => prev.map(n => n._id === notifId ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -76,8 +80,7 @@ export default function DashboardPage() {
 
   const handlePayInstallment = async (id) => {
     try {
-      const token = localStorage.getItem("token");
-      await api.put(`/finance/pay-installment/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/finance/pay-installment/${id}`, {});
       fetchFinanceData(currentPage);
     } catch (error) {
       console.error("Error paying installment:", error);
@@ -107,33 +110,30 @@ export default function DashboardPage() {
       `}</style>
 
       <div className="max-w-5xl mx-auto">
-        <DashboardHeader 
-          notifications={notifications} 
-          unreadCount={unreadCount} 
-          onMarkAsRead={handleMarkAsRead} 
-          onLogout={handleLogout} 
+        <DashboardHeader
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={handleMarkAsRead}
+          onLogout={handleLogout}
         />
 
         <StatsGrid summary={stats.summary} />
 
-        <TransactionList 
-          transactions={transactions} 
-          summary={stats.summary} 
-          currentPage={currentPage} 
-          totalPages={totalPages} 
-          onPageChange={setCurrentPage} 
-          onPayInstallment={handlePayInstallment} 
-          onOpenModal={() => setIsModalOpen(true)} 
+        <TransactionList
+          transactions={transactions}
+          summary={stats.summary}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          onPayInstallment={handlePayInstallment}
+          onOpenModal={() => setIsModalOpen(true)}
         />
       </div>
 
-      <TransactionModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onRefreshData={() => {
-          setCurrentPage(1);
-          fetchFinanceData(1);
-        }} 
+      <TransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onRefreshData={() => fetchFinanceData(1)}
       />
     </div>
   );
