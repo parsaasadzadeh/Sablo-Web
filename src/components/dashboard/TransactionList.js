@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Plus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
+import { Plus, CheckCircle, ChevronRight, ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 
 const TAB_OPTIONS = [
@@ -12,7 +12,8 @@ const TAB_OPTIONS = [
 ];
 
 export default function TransactionList({ 
-  transactions, summary, currentPage, totalPages, onPageChange, onPayInstallment, onOpenModal 
+  transactions, summary, currentPage, totalPages, onPageChange, onPayInstallment, onOpenModal,
+  onEditTransaction, onDeleteTransaction
 }) {
   const [activeTab, setActiveTab] = useState("ALL");
 
@@ -57,7 +58,7 @@ export default function TransactionList({
       ) : (
         <div className="divide-y divide-[#EDE8DC] max-h-[420px] overflow-y-auto pr-1">
           {filteredTransactions.map((tx) => (
-            <div key={tx._id} className="flex items-center justify-between py-4 hover:bg-[#FCFBF8]/60 px-2 rounded-xl transition-colors">
+            <div key={tx._id} className="group flex items-center justify-between py-4 hover:bg-[#FCFBF8]/60 px-2 rounded-xl transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${
                   tx.type === 'INCOME' ? 'bg-emerald-50 text-emerald-700' : 
@@ -80,7 +81,7 @@ export default function TransactionList({
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 text-left shrink-0">
+              <div className="flex items-center gap-3 text-left shrink-0">
                 {tx.type === 'INSTALLMENT' && !tx.isPaid && (
                   <button onClick={() => onPayInstallment(tx._id)} className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2 py-1 rounded-lg flex items-center gap-1 transition-colors">
                     <CheckCircle size={12} /> پرداخت
@@ -95,6 +96,24 @@ export default function TransactionList({
                     {tx.type === 'INCOME' || tx.type === 'LOAN' ? '+' : '-'}{tx.amount.toLocaleString()} <span className="text-xs font-normal">ریال</span>
                   </span>
                   <span className="block text-[10px] text-[#9A8F78] mt-1 tabular">{formatJalaliDate(tx.date)}</span>
+                </div>
+
+                {/* دکمه‌های ویرایش و حذف */}
+                <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => onEditTransaction(tx)}
+                    title="ویرایش"
+                    className="p-1.5 rounded-lg text-[#8A8273] hover:text-[#0F6F5C] hover:bg-[#0F6F5C]/10 transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    onClick={() => onDeleteTransaction(tx)}
+                    title="حذف"
+                    className="p-1.5 rounded-lg text-[#8A8273] hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             </div>
