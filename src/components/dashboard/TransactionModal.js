@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import DatePicker from "react-multi-date-picker";
@@ -13,13 +13,36 @@ const TYPE_VARIANTS = [
   { key: "LOAN", label: "وام" }
 ];
 
-export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
+// editingTransaction: null => حالت افزودن تراکنش جدید
+// editingTransaction: {..} => حالت ویرایش یک تراکنش موجود
+export default function TransactionModal({ isOpen, onClose, onRefreshData, editingTransaction }) {
+  const isEditMode = Boolean(editingTransaction);
+
   const [type, setType] = useState("EXPENSE");
   const [amount, setAmount] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+
+  // هر بار مودال باز می‌شه یا تراکنش در حال ویرایش عوض می‌شه، فرم رو پر یا خالی می‌کنیم
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (editingTransaction) {
+      setType(editingTransaction.type);
+      setAmount(String(editingTransaction.amount ?? ""));
+      setTitle(editingTransaction.title ?? "");
+      setDescription(editingTransaction.description ?? "");
+      setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
+    } else {
+      setType("EXPENSE");
+      setAmount("");
+      setTitle("");
+      setDescription("");
+      setDueDate("");
+    }
+  }, [isOpen, editingTransaction]);
 
   if (!isOpen) return null;
 
@@ -31,19 +54,29 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
     try {
       const formattedDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
-      await api.post("/finance/add", {
-        type,
-        amount: Number(amount),
-        title,
-        description,
-        dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
-      });
+      if (isEditMode) {
+        // ویرایش: نوع تراکنش قابل تغییر نیست، فقط بقیه فیلدها آپدیت می‌شن
+        await api.put(`/finance/update/${editingTransaction._id}`, {
+          amount: Number(amount),
+          title,
+          description,
+          dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
+        });
+      } else {
+        await api.post("/finance/add", {
+          type,
+          amount: Number(amount),
+          title,
+          description,
+          dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
+        });
+      }
 
       setTitle(""); setAmount(""); setDescription(""); setDueDate("");
       onClose();
       onRefreshData();
     } catch (error) {
-      console.error("Error creating new transaction record:", error);
+      console.error("Error saving transaction record:", error);
       alert(error.response?.data?.message || "خطایی رخ داد");
     } finally {
       setFormLoading(false);
@@ -58,18 +91,31 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
       `}</style>
 
       <div className="bg-white rounded-2xl w-full max-w-md p-6 border border-[#EDE8DC] shadow-xl">
-        <h3 className="text-lg font-bold text-[#26241F] mb-4">ثبت تراکنش هوشمند</h3>
+        <h3 className="text-lg font-bold text-[#26241F] mb-4">
+          {isEditMode ? "ویرایش تراکنش" : "ثبت تراکنش هوشمند"}
+        </h3>
 
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">نوع تراکنش</label>
             <div className="grid grid-cols-4 gap-2">
               {TYPE_VARIANTS.map((item) => (
-                <button key={item.key} type="button" onClick={() => setType(item.key)} className={`py-2 text-[11px] font-semibold rounded-xl border transition-all ${type === item.key ? "bg-[#0F6F5C] text-white border-[#0F6F5C]" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"}`}>
+                <button
+                  key={item.key}
+                  type="button"
+                  disabled={isEditMode}
+                  onClick={() => setType(item.key)}
+                  className={`py-2 text-[11px] font-semibold rounded-xl border transition-all ${
+                    type === item.key ? "bg-[#0F6F5C] text-white border-[#0F6F5C]" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"
+                  } ${isEditMode ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
                   {item.label}
                 </button>
               ))}
             </div>
+            {isEditMode && (
+              <p className="text-[10px] text-[#8A8273] mt-1.5">نوع تراکنش پس از ثبت قابل تغییر نیست.</p>
+            )}
           </div>
 
           <div>
@@ -103,7 +149,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData }) {
 
           <div className="flex gap-2.5 pt-2">
             <button type="submit" disabled={formLoading} className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5">
-              {formLoading && <Loader2 size={14} className="animate-spin" />} ذخیره تراکنش
+              {formLoading && <Loader2 size={14} className="animate-spin" />} {isEditMode ? "بروزرسانی تراکنش" : "ذخیره تراکنش"}
             </button>
             <button type="button" onClick={onClose} className="bg-gray-100 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-xs">انصراف</button>
           </div>
