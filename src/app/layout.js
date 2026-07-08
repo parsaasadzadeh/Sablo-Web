@@ -1,6 +1,7 @@
 import './globals.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import RegisterSW from './register-sw';
+import { AlertProvider } from "./Alertprovider";
 
 export const metadata = {
   metadataBase: new URL('https://sablo.app'), // دامنه واقعی‌تو بذار
@@ -47,7 +48,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fa" dir="rtl">
       <body className="font-vazir antialiased">
+    <AlertProvider>
         {children}
+    <AlertProvider />
         <RegisterSW />
       </body>
     </html>
