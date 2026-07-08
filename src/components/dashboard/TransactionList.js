@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Plus, CheckCircle, ChevronRight, ChevronLeft, Pencil, Trash2 } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
+import TransactionDetailModal from "./TransactionDetailModal";
 
 const TAB_OPTIONS = [
   { key: "ALL", label: "همه" },
@@ -16,6 +17,7 @@ export default function TransactionList({
   onEditTransaction, onDeleteTransaction
 }) {
   const [activeTab, setActiveTab] = useState("ALL");
+  const [selectedTransaction, setSelectedTransaction] = useState(null); // تراکنشی که مودال جزئیاتش بازه
 
   const filteredTransactions = transactions.filter(
     (tx) => activeTab === "ALL" || tx.type === activeTab
@@ -58,7 +60,11 @@ export default function TransactionList({
       ) : (
         <div className="divide-y divide-[#EDE8DC] max-h-[480px] overflow-y-auto pr-1">
           {filteredTransactions.map((tx) => (
-            <div key={tx._id} className="group py-4 px-1 sm:px-2 rounded-xl hover:bg-[#FCFBF8]/60 transition-colors">
+            <div
+              key={tx._id}
+              onClick={() => setSelectedTransaction(tx)}
+              className="group py-4 px-1 sm:px-2 rounded-xl hover:bg-[#FCFBF8]/60 active:bg-[#FCFBF8] transition-colors cursor-pointer"
+            >
               {/* ردیف بالا: آیکن نوع + عنوان/توضیحات + مبلغ */}
               <div className="flex items-start gap-2.5 sm:gap-3">
                 <div className={`w-10 h-9 sm:w-12 sm:h-10 rounded-xl flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0 ${
@@ -98,7 +104,7 @@ export default function TransactionList({
               {/* ردیف پایین: اکشن‌ها (پرداخت / ویرایش / حذف) - همیشه در گوشی نمایش داده می‌شن */}
               <div className="flex items-center justify-end gap-1.5 mt-2.5 pr-0 sm:pr-[3.5rem]">
                 {tx.type === 'INSTALLMENT' && !tx.isPaid && (
-                  <button onClick={() => onPayInstallment(tx._id)} className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors ml-auto">
+                  <button onClick={(e) => { e.stopPropagation(); onPayInstallment(tx._id); }} className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors ml-auto">
                     <CheckCircle size={12} /> پرداخت
                   </button>
                 )}
@@ -107,14 +113,14 @@ export default function TransactionList({
                 )}
 
                 <button
-                  onClick={() => onEditTransaction(tx)}
+                  onClick={(e) => { e.stopPropagation(); onEditTransaction(tx); }}
                   title="ویرایش"
                   className="p-2 sm:p-1.5 rounded-lg text-[#8A8273] hover:text-[#0F6F5C] hover:bg-[#0F6F5C]/10 active:bg-[#0F6F5C]/10 transition-colors"
                 >
                   <Pencil size={14} />
                 </button>
                 <button
-                  onClick={() => onDeleteTransaction(tx)}
+                  onClick={(e) => { e.stopPropagation(); onDeleteTransaction(tx); }}
                   title="حذف"
                   className="p-2 sm:p-1.5 rounded-lg text-[#8A8273] hover:text-rose-600 hover:bg-rose-50 active:bg-rose-50 transition-colors"
                 >
@@ -159,6 +165,15 @@ export default function TransactionList({
           overflow: hidden;
         }
       `}</style>
+
+      {/* مودال جزئیات کامل تراکنش - با کلیک روی هر ردیف باز می‌شه */}
+      <TransactionDetailModal
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+        onEdit={onEditTransaction}
+        onDelete={onDeleteTransaction}
+        onPayInstallment={onPayInstallment}
+      />
     </div>
   );
 }
