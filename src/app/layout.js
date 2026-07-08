@@ -50,7 +50,7 @@ export default function RootLayout({ children }) {
       <body className="font-vazir antialiased">
     <AlertProvider>
         {children}
-    <AlertProvider />
+    </AlertProvider >
         <RegisterSW />
       </body>
     </html>
