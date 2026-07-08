@@ -1,118 +1,159 @@
 "use client";
-import { X, CheckCircle, Clock, Pencil, Trash2 } from "lucide-react";
-import { formatJalaliDate } from "@/utils/date";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import api from "@/lib/axios";
+import DatePicker from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 
-const TYPE_LABELS = {
-  INCOME: "درآمد",
-  EXPENSE: "خرج",
-  INSTALLMENT: "قسط",
-  LOAN: "وام"
-};
+const TYPE_VARIANTS = [
+  { key: "INCOME", label: "درآمد" },
+  { key: "EXPENSE", label: "خرج" },
+  { key: "INSTALLMENT", label: "قسط" },
+  { key: "LOAN", label: "وام" }
+];
 
-const TYPE_COLORS = {
-  INCOME: "bg-emerald-50 text-emerald-700",
-  EXPENSE: "bg-rose-50 text-rose-700",
-  INSTALLMENT: "bg-orange-50 text-orange-700",
-  LOAN: "bg-blue-50 text-blue-700"
-};
+// editingTransaction: null => حالت افزودن تراکنش جدید
+// editingTransaction: {..} => حالت ویرایش یک تراکنش موجود
+export default function TransactionModal({ isOpen, onClose, onRefreshData, editingTransaction }) {
+  const isEditMode = Boolean(editingTransaction);
 
-export default function TransactionDetailModal({ transaction, onClose, onEdit, onDelete, onPayInstallment }) {
-  if (!transaction) return null;
-  const tx = transaction;
-  const isPositive = tx.type === "INCOME" || tx.type === "LOAN";
+  const [type, setType] = useState("EXPENSE");
+  const [amount, setAmount] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [formLoading, setFormLoading] = useState(false);
+
+  // هر بار مودال باز می‌شه یا تراکنش در حال ویرایش عوض می‌شه، فرم رو پر یا خالی می‌کنیم
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (editingTransaction) {
+      setType(editingTransaction.type);
+      setAmount(String(editingTransaction.amount ?? ""));
+      setTitle(editingTransaction.title ?? "");
+      setDescription(editingTransaction.description ?? "");
+      setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
+    } else {
+      setType("EXPENSE");
+      setAmount("");
+      setTitle("");
+      setDescription("");
+      setDueDate("");
+    }
+  }, [isOpen, editingTransaction]);
+
+  if (!isOpen) return null;
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!amount || !title) return alert("لطفاً عنوان و مبلغ را وارد کنید");
+
+    setFormLoading(true);
+    try {
+      const formattedDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
+
+      if (isEditMode) {
+        // ویرایش: نوع تراکنش قابل تغییر نیست، فقط بقیه فیلدها آپدیت می‌شن
+        await api.put(`/finance/update/${editingTransaction._id}`, {
+          amount: Number(amount),
+          title,
+          description,
+          dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
+        });
+      } else {
+        await api.post("/finance/add", {
+          type,
+          amount: Number(amount),
+          title,
+          description,
+          dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
+        });
+      }
+
+      setTitle(""); setAmount(""); setDescription(""); setDueDate("");
+      onClose();
+      onRefreshData();
+    } catch (error) {
+      console.error("Error saving transaction record:", error);
+      alert(error.response?.data?.message || "خطایی رخ داد");
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 border border-[#EDE8DC] shadow-xl max-h-[92vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* هدر */}
-        <div className="flex items-start justify-between gap-3 mb-5">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className={`w-11 h-9 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${TYPE_COLORS[tx.type]}`}>
-              {TYPE_LABELS[tx.type]}
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50">
+      <style>{`
+        .rmdp-input { width: 100% !important; height: 42px !important; border-radius: 0.75rem !important; background-color: rgb(255 251 235 / 0.5) !important; border-color: rgb(253 230 138) !important; font-size: 0.875rem !important; padding: 0.625rem 0.875rem !important; outline: none !important; }
+        .rmdp-input:focus { border-color: #0F6F5C !important; }
+      `}</style>
+
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 border border-[#EDE8DC] shadow-xl max-h-[92vh] overflow-y-auto">
+        <h3 className="text-lg font-bold text-[#26241F] mb-4">
+          {isEditMode ? "ویرایش تراکنش" : "ثبت تراکنش هوشمند"}
+        </h3>
+
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5">نوع تراکنش</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {TYPE_VARIANTS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  disabled={isEditMode}
+                  onClick={() => setType(item.key)}
+                  className={`py-2 text-[11px] font-semibold rounded-xl border transition-all ${
+                    type === item.key ? "bg-[#0F6F5C] text-white border-[#0F6F5C]" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"
+                  } ${isEditMode ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
-            <h3 className="text-base font-bold text-[#26241F] break-words">{tx.title}</h3>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-[#8A8273] hover:bg-gray-100 shrink-0">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* مبلغ */}
-        <div className={`rounded-2xl p-4 mb-4 ${isPositive ? "bg-emerald-50" : "bg-rose-50"}`}>
-          <span className="text-[11px] text-[#8A8273] block mb-1">مبلغ تراکنش</span>
-          <span className={`text-xl font-bold tabular tracking-wide ${isPositive ? "text-emerald-700" : "text-rose-700"}`}>
-            {isPositive ? "+" : "-"}{tx.amount.toLocaleString()} <span className="text-xs font-normal">ریال</span>
-          </span>
-        </div>
-
-        {/* توضیحات کامل */}
-        {tx.description && (
-          <div className="mb-4">
-            <span className="text-[11px] text-[#8A8273] block mb-1">توضیحات</span>
-            <p className="text-sm text-[#3A372F] leading-6 break-words whitespace-pre-wrap">{tx.description}</p>
-          </div>
-        )}
-
-        {/* اطلاعات تکمیلی */}
-        <div className="space-y-2.5 mb-5">
-          <div className="flex items-center justify-between text-xs border-b border-[#EDE8DC] pb-2.5">
-            <span className="text-[#8A8273]">دسته‌بندی</span>
-            <span className="text-[#26241F] font-medium">{tx.category || "عمومی"}</span>
+            {isEditMode && (
+              <p className="text-[10px] text-[#8A8273] mt-1.5">نوع تراکنش پس از ثبت قابل تغییر نیست.</p>
+            )}
           </div>
 
-          <div className="flex items-center justify-between text-xs border-b border-[#EDE8DC] pb-2.5">
-            <span className="text-[#8A8273]">تاریخ ثبت</span>
-            <span className="text-[#26241F] font-medium tabular">{formatJalaliDate(tx.date)}</span>
+          <div>
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5">عنوان</label>
+            <input type="text" placeholder="مثال: حقوق، خرید، وام مسکن" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
           </div>
 
-          {tx.dueDate && (tx.type === "INSTALLMENT" || tx.type === "LOAN") && (
-            <div className="flex items-center justify-between text-xs border-b border-[#EDE8DC] pb-2.5">
-              <span className="text-[#8A8273]">تاریخ سررسید</span>
-              <span className="text-[#26241F] font-medium tabular">{formatJalaliDate(tx.dueDate)}</span>
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5">مبلغ (ریال)</label>
+            <input type="number" placeholder="مثال: 5000000" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider" />
+          </div>
 
-          {tx.type === "INSTALLMENT" && (
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#8A8273]">وضعیت پرداخت</span>
-              {tx.isPaid ? (
-                <span className="text-emerald-600 font-medium flex items-center gap-1"><CheckCircle size={13} /> پرداخت شده</span>
-              ) : (
-                <span className="text-amber-600 font-medium flex items-center gap-1"><Clock size={13} /> پرداخت نشده</span>
-              )}
+          {(type === "LOAN" || type === "INSTALLMENT") && (
+            <div>
+              <label className="block text-xs font-medium text-amber-800 mb-1.5">تاریخ سررسید (شمسی)</label>
+              <DatePicker
+                calendar={persian}
+                locale={persian_fa}
+                value={dueDate}
+                onChange={(dateObject) => setDueDate(dateObject?.isValid ? dateObject.toDate() : "")}
+                calendarPosition="bottom-right"
+                placeholder="انتخاب تاریخ"
+              />
             </div>
           )}
-        </div>
 
-        {/* اکشن‌ها */}
-        <div className="flex gap-2">
-          {tx.type === "INSTALLMENT" && !tx.isPaid && (
-            <button
-              onClick={() => { onPayInstallment(tx._id); onClose(); }}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5"
-            >
-              <CheckCircle size={14} /> پرداخت قسط
+          <div>
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5">توضیحات (اختیاری)</label>
+            <textarea rows={2} placeholder="توضیحات تکمیلی..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
+          </div>
+
+          <div className="flex gap-2.5 pt-2">
+            <button type="submit" disabled={formLoading} className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5">
+              {formLoading && <Loader2 size={14} className="animate-spin" />} {isEditMode ? "بروزرسانی تراکنش" : "ذخیره تراکنش"}
             </button>
-          )}
-          <button
-            onClick={() => { onEdit(tx); onClose(); }}
-            className="flex-1 bg-[#0F6F5C]/10 hover:bg-[#0F6F5C]/20 text-[#0F6F5C] text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5"
-          >
-            <Pencil size={14} /> ویرایش
-          </button>
-          <button
-            onClick={() => { onDelete(tx); onClose(); }}
-            className="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5"
-          >
-            <Trash2 size={14} /> حذف
-          </button>
-        </div>
+            <button type="button" onClick={onClose} className="bg-gray-100 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-xs">انصراف</button>
+          </div>
+        </form>
       </div>
     </div>
   );
