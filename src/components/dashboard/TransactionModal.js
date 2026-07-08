@@ -84,13 +84,13 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50">
       <style>{`
         .rmdp-input { width: 100% !important; height: 42px !important; border-radius: 0.75rem !important; background-color: rgb(255 251 235 / 0.5) !important; border-color: rgb(253 230 138) !important; font-size: 0.875rem !important; padding: 0.625rem 0.875rem !important; outline: none !important; }
         .rmdp-input:focus { border-color: #0F6F5C !important; }
       `}</style>
 
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 border border-[#EDE8DC] shadow-xl">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 border border-[#EDE8DC] shadow-xl max-h-[92vh] overflow-y-auto">
         <h3 className="text-lg font-bold text-[#26241F] mb-4">
           {isEditMode ? "ویرایش تراکنش" : "ثبت تراکنش هوشمند"}
         </h3>
@@ -98,7 +98,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">نوع تراکنش</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {TYPE_VARIANTS.map((item) => (
                 <button
                   key={item.key}
