@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from "lucide-react";
 
 const AlertContext = createContext(null);
@@ -48,6 +48,24 @@ export function AlertProvider({ children }) {
     confirmState?.resolve(result);
     setConfirmState(null);
   };
+
+  // ⭐ هایجک سراسری window.alert:
+  // از این به بعد هر جای پروژه که alert("...") صدا زده بشه (حتی توی فایل‌های قدیمی)
+  // به‌جای پاپ‌آپ زشت مرورگر، توست خودمون نمایش داده می‌شه. نیازی به ویرایش اون فایل‌ها نیست.
+  useEffect(() => {
+    const originalAlert = window.alert;
+    window.alert = (message) => showAlert(String(message), "info");
+
+    // ⭐ یه تابع سراسری برای تأیید (چون window.confirm بومی، synchronous هست و
+    // نمی‌شه به یه مودال async مثل این تبدیلش کرد). هرجا از window.confirm(...)
+    // استفاده کرده بودید، فقط کافیه به await window.confirmDialog(...) تغییرش بدید.
+    window.confirmDialog = (message, options) => showConfirm(message, options);
+
+    return () => {
+      window.alert = originalAlert;
+      delete window.confirmDialog;
+    };
+  }, [showAlert, showConfirm]);
 
   return (
     <AlertContext.Provider value={{ showAlert, showConfirm }}>
@@ -125,10 +143,14 @@ export function AlertProvider({ children }) {
   );
 }
 
-// هوک استفاده در هر کامپوننت:
+// هوک استفاده در هر کامپوننت (اختیاری - برای کنترل بیشتر روی نوع پیام):
 // const { showAlert, showConfirm } = useAlert();
 // showAlert("تراکنش با موفقیت ثبت شد", "success");
 // const ok = await showConfirm("آیا مطمئنید؟", { variant: "danger", confirmText: "حذف" });
+//
+// یا بدون import کردن هیچ چیزی، مستقیم توی هر فایلی:
+// alert("پیام شما");                              -> خودکار توست خودمون میاد
+// const ok = await window.confirmDialog("آیا مطمئنید؟", { variant: "danger" });
 export function useAlert() {
   const ctx = useContext(AlertContext);
   if (!ctx) throw new Error("useAlert باید داخل <AlertProvider> استفاده شود");
