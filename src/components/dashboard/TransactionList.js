@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Plus, CheckCircle, ChevronRight, ChevronLeft, Pencil, Trash2 } from "lucide-react";
+import { Plus, CheckCircle, ChevronRight, ChevronLeft, Pencil, Trash2, Eye } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 import TransactionDetailModal from "./TransactionDetailModal";
 
@@ -62,8 +62,7 @@ export default function TransactionList({
           {filteredTransactions.map((tx) => (
             <div
               key={tx._id}
-              onClick={() => setSelectedTransaction(tx)}
-              className="group py-4 px-1 sm:px-2 rounded-xl hover:bg-[#FCFBF8]/60 active:bg-[#FCFBF8] transition-colors cursor-pointer"
+              className="group py-4 px-1 sm:px-2 rounded-xl hover:bg-[#FCFBF8]/60 transition-colors"
             >
               {/* ردیف بالا: آیکن نوع + عنوان/توضیحات + مبلغ */}
               <div className="flex items-start gap-2.5 sm:gap-3">
@@ -112,6 +111,13 @@ export default function TransactionList({
                   <span className="text-[10px] text-emerald-600 flex items-center gap-1 ml-auto"><CheckCircle size={12} /> پرداخت شده</span>
                 )}
 
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedTransaction(tx); }}
+                  title="مشاهده جزئیات"
+                  className="p-2 sm:p-1.5 rounded-lg text-[#8A8273] hover:text-blue-600 hover:bg-blue-50 active:bg-blue-50 transition-colors"
+                >
+                  <Eye size={14} />
+                </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); onEditTransaction(tx); }}
                   title="ویرایش"
@@ -166,7 +172,7 @@ export default function TransactionList({
         }
       `}</style>
 
-      {/* مودال جزئیات کامل تراکنش - با کلیک روی هر ردیف باز می‌شه */}
+      {/* مودال جزئیات کامل تراکنش - با کلیک روی آیکون چشم باز می‌شه */}
       <TransactionDetailModal
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}
