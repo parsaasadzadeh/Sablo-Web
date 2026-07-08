@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null); // null = حالت افزودن، شیء تراکنش = حالت ویرایش
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -88,6 +89,40 @@ export default function DashboardPage() {
     }
   };
 
+  // باز کردن مودال برای افزودن تراکنش جدید
+  const handleOpenAddModal = () => {
+    setEditingTransaction(null);
+    setIsModalOpen(true);
+  };
+
+  // باز کردن مودال برای ویرایش یک تراکنش موجود
+  const handleOpenEditModal = (transaction) => {
+    setEditingTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTransaction(null);
+  };
+
+  // حذف تراکنش با گرفتن تأیید از کاربر
+  const handleDeleteTransaction = async (transaction) => {
+    const confirmMessage = transaction.type === 'LOAN'
+      ? `آیا مطمئنید می‌خواهید وام «${transaction.title}» را حذف کنید؟ تمام اقساط مرتبط با این وام هم حذف خواهند شد.`
+      : `آیا مطمئنید می‌خواهید تراکنش «${transaction.title}» را حذف کنید؟`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      await api.delete(`/finance/delete/${transaction._id}`);
+      fetchFinanceData(currentPage);
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      alert(error.response?.data?.message || "خطا در حذف تراکنش رخ داد.");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.push("/");
@@ -126,14 +161,17 @@ export default function DashboardPage() {
           totalPages={totalPages}
           onPageChange={handlePageChange}
           onPayInstallment={handlePayInstallment}
-          onOpenModal={() => setIsModalOpen(true)}
+          onOpenModal={handleOpenAddModal}
+          onEditTransaction={handleOpenEditModal}
+          onDeleteTransaction={handleDeleteTransaction}
         />
       </div>
 
       <TransactionModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onRefreshData={() => fetchFinanceData(1)}
+        onClose={handleCloseModal}
+        onRefreshData={() => fetchFinanceData(currentPage)}
+        editingTransaction={editingTransaction}
       />
     </div>
   );
