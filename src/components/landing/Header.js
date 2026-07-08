@@ -11,6 +11,7 @@ export default function Header() {
     { href: "#stats", label: "آمارها" },
     { href: "#testimonials", label: "نظرات کاربران" },
     { href: "/contact", label: "تماس با ما" },
+    { href: "/about", label: "درباره ما" },
   ];
 
   return (
