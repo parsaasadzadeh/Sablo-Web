@@ -13,6 +13,22 @@ const TYPE_VARIANTS = [
   { key: "LOAN", label: "وام" }
 ];
 
+// فقط رقم‌ها رو نگه می‌داره و با کاما جدا می‌کنه، مثلاً "5000000" => "5,000,000"
+const formatAmount = (value) => {
+  if (value === null || value === undefined) return "";
+  const digitsOnly = String(value).replace(/[^\d]/g, "");
+  if (!digitsOnly) return "";
+  // جلوگیری از صفرهای اضافی در ابتدای عدد (مثلاً "007" => "7")
+  const normalized = String(Number(digitsOnly));
+  return Number(normalized).toLocaleString("en-US");
+};
+
+// کاماها رو حذف می‌کنه و یه عدد خالص برمی‌گردونه (برای ارسال به سرور)
+const unformatAmount = (value) => {
+  const digitsOnly = String(value ?? "").replace(/[^\d]/g, "");
+  return digitsOnly ? Number(digitsOnly) : 0;
+};
+
 // editingTransaction: null => حالت افزودن تراکنش جدید
 // editingTransaction: {..} => حالت ویرایش یک تراکنش موجود
 export default function TransactionModal({ isOpen, onClose, onRefreshData, editingTransaction }) {
@@ -31,7 +47,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
 
     if (editingTransaction) {
       setType(editingTransaction.type);
-      setAmount(String(editingTransaction.amount ?? ""));
+      setAmount(formatAmount(editingTransaction.amount));
       setTitle(editingTransaction.title ?? "");
       setDescription(editingTransaction.description ?? "");
       setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
@@ -46,9 +62,19 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
 
   if (!isOpen) return null;
 
+  const handleAmountChange = (e) => {
+    setAmount(formatAmount(e.target.value));
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!amount || !title) return alert("لطفاً عنوان و مبلغ را وارد کنید");
+
+    const numericAmount = unformatAmount(amount);
+
+    if (!numericAmount || !title.trim()) {
+      alert("لطفاً عنوان و مبلغ را وارد کنید");
+      return;
+    }
 
     setFormLoading(true);
     try {
@@ -57,22 +83,25 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
       if (isEditMode) {
         // ویرایش: نوع تراکنش قابل تغییر نیست، فقط بقیه فیلدها آپدیت می‌شن
         await api.put(`/finance/update/${editingTransaction._id}`, {
-          amount: Number(amount),
+          amount: numericAmount,
           title,
           description,
-          dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
+          dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined
         });
       } else {
         await api.post("/finance/add", {
           type,
-          amount: Number(amount),
+          amount: numericAmount,
           title,
           description,
-          dueDate: (type === 'LOAN' || type === 'INSTALLMENT') ? formattedDueDate : undefined
+          dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined
         });
       }
 
-      setTitle(""); setAmount(""); setDescription(""); setDueDate("");
+      setTitle("");
+      setAmount("");
+      setDescription("");
+      setDueDate("");
       onClose();
       onRefreshData();
     } catch (error) {
@@ -120,12 +149,25 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
 
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">عنوان</label>
-            <input type="text" placeholder="مثال: حقوق، خرید، وام مسکن" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
+            <input
+              type="text"
+              placeholder="مثال: حقوق، خرید، وام مسکن"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]"
+            />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">مبلغ (ریال)</label>
-            <input type="number" placeholder="مثال: 5000000" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider" />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="مثال: 5,000,000"
+              value={amount}
+              onChange={handleAmountChange}
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider"
+            />
           </div>
 
           {(type === "LOAN" || type === "INSTALLMENT") && (
@@ -144,14 +186,26 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
 
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">توضیحات (اختیاری)</label>
-            <textarea rows={2} placeholder="توضیحات تکمیلی..." value={description} onChange={(e) => setDescription(e.target.value)} className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]" />
+            <textarea
+              rows={2}
+              placeholder="توضیحات تکمیلی..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]"
+            />
           </div>
 
           <div className="flex gap-2.5 pt-2">
-            <button type="submit" disabled={formLoading} className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5">
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5"
+            >
               {formLoading && <Loader2 size={14} className="animate-spin" />} {isEditMode ? "بروزرسانی تراکنش" : "ذخیره تراکنش"}
             </button>
-            <button type="button" onClick={onClose} className="bg-gray-100 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-xs">انصراف</button>
+            <button type="button" onClick={onClose} className="bg-gray-100 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-xs">
+              انصراف
+            </button>
           </div>
         </form>
       </div>
