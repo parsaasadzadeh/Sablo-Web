@@ -1,10 +1,25 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, BellRing, Check, LogOut } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 
 export default function DashboardHeader({ notifications, unreadCount, onMarkAsRead, onLogout }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  // ⭐ آخرین تعداد unread ای که کاربر «دیده» (یعنی پنل رو باز کرده)
+  const [lastSeenCount, setLastSeenCount] = useState(0);
+
+  // وقتی پنل بازه، همیشه با unreadCount فعلی همگام نگه‌اش دار
+  // (هم برای دیدن اولیه، هم برای وقتی کاربر داخل پنل چیزی رو read می‌کنه)
+  useEffect(() => {
+    if (isNotifOpen) {
+      setLastSeenCount(unreadCount);
+    }
+  }, [isNotifOpen, unreadCount]);
+
+  // فقط وقتی عدد جدید نشون بده که از آخرین بار دیدنِ کاربر بیشتر شده باشه
+  const hasNewNotifications = unreadCount > lastSeenCount;
+  const newCount = Math.max(0, unreadCount - lastSeenCount);
 
   return (
     <header className="flex items-center justify-between mb-6 bg-white p-5 rounded-2xl border border-[#EDE8DC] relative">
@@ -12,26 +27,25 @@ export default function DashboardHeader({ notifications, unreadCount, onMarkAsRe
         <h1 className="text-xl font-bold text-[#26241F]">داشبورد مدیریت مالی 💰</h1>
         <p className="text-xs text-[#8A8273] mt-1">مدیریت درآمدها، مخارج، اقساط و بدهی‌های شما</p>
       </div>
-      
+
       <div className="flex items-center gap-4">
         {/* کلید اعلان‌ها */}
         <div className="relative">
-          <button 
+          <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors relative"
           >
-            {unreadCount > 0 ? (
+            {hasNewNotifications ? (
               <BellRing size={20} className="text-amber-600 animate-pulse" />
             ) : (
               <Bell size={20} className="text-gray-500" />
             )}
-            {unreadCount > 0 && (
+            {hasNewNotifications && (
               <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-white">
-                {unreadCount}
+                {newCount}
               </span>
             )}
           </button>
-
           {/* باکس پاپ‌اور منوی اعلانات */}
           {isNotifOpen && (
             <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
@@ -62,7 +76,6 @@ export default function DashboardHeader({ notifications, unreadCount, onMarkAsRe
             </div>
           )}
         </div>
-
         <button onClick={onLogout} className="flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3.5 py-2 rounded-xl transition-colors">
           <LogOut size={16} /> خروج
         </button>
