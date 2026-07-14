@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState(null); // null = حالت افزودن، شیء تراکنش = حالت ویرایش
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -25,8 +25,7 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // ⭐ حالا این تابع تنها نقطه‌ی ورودی برای فچ کردن داده‌هاست.
-  // دیگه هیچ useEffect ای روی currentPage گوش نمی‌ده، پس امکان دابل-فچ از بین می‌ره.
+  // فچ کامل (stats + transactions + notifications) — فقط موقع لود اولیه یا اکشن‌های کاربر
   const fetchFinanceData = useCallback(async (page) => {
     try {
       const token = localStorage.getItem("token");
@@ -59,12 +58,35 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  // فقط یک بار موقع mount اجرا می‌شه
+  // ⭐ فچ سبک، فقط اعلانات — بدون setLoading، برای پولینگ خودکار
+  const fetchNotificationsOnly = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const notifRes = await api.get("/notifications");
+      setNotifications(notifRes.data.notifications);
+      setUnreadCount(notifRes.data.unreadCount);
+    } catch (error) {
+      console.error("Error polling notifications:", error);
+      // عمداً کاربر رو لاگ‌اوت نمی‌کنیم فقط به‌خاطر خطای پولینگ در پس‌زمینه
+    }
+  }, []);
+
+  // فقط یک بار موقع mount: فچ کامل
   useEffect(() => {
     fetchFinanceData(1);
   }, [fetchFinanceData]);
 
-  // ⭐ صفحه‌بندی حالا خودش صراحتاً فچ می‌زنه، نه از طریق useEffect
+  // ⭐ پولینگ خودکار اعلانات هر ۳۰ ثانیه
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotificationsOnly();
+    }, 30000); // هر ۳۰ ثانیه؛ می‌تونی این عدد رو کم/زیاد کنی
+
+    return () => clearInterval(interval); // پاک کردن تایمر موقع خروج از صفحه
+  }, [fetchNotificationsOnly]);
+
   const handlePageChange = (page) => {
     fetchFinanceData(page);
   };
@@ -89,13 +111,11 @@ export default function DashboardPage() {
     }
   };
 
-  // باز کردن مودال برای افزودن تراکنش جدید
   const handleOpenAddModal = () => {
     setEditingTransaction(null);
     setIsModalOpen(true);
   };
 
-  // باز کردن مودال برای ویرایش یک تراکنش موجود
   const handleOpenEditModal = (transaction) => {
     setEditingTransaction(transaction);
     setIsModalOpen(true);
@@ -106,7 +126,6 @@ export default function DashboardPage() {
     setEditingTransaction(null);
   };
 
-  // حذف تراکنش با گرفتن تأیید از کاربر
   const handleDeleteTransaction = async (transaction) => {
     const confirmMessage = transaction.type === 'LOAN'
       ? `آیا مطمئنید می‌خواهید وام «${transaction.title}» را حذف کنید؟ تمام اقساط مرتبط با این وام هم حذف خواهند شد.`
