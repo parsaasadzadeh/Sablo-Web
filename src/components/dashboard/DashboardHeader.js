@@ -3,21 +3,26 @@ import { useState, useEffect } from "react";
 import { Bell, BellRing, Check, LogOut } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 
+const LAST_SEEN_KEY = "notif_last_seen_count";
+
 export default function DashboardHeader({ notifications, unreadCount, onMarkAsRead, onLogout }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
-  // ⭐ آخرین تعداد unread ای که کاربر «دیده» (یعنی پنل رو باز کرده)
-  const [lastSeenCount, setLastSeenCount] = useState(0);
+  // ⭐ مقدار اولیه رو از localStorage می‌خونیم تا بعد از رفرش هم حفظ بشه
+  const [lastSeenCount, setLastSeenCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = localStorage.getItem(LAST_SEEN_KEY);
+    return saved ? parseInt(saved, 10) : 0;
+  });
 
-  // وقتی پنل بازه، همیشه با unreadCount فعلی همگام نگه‌اش دار
-  // (هم برای دیدن اولیه، هم برای وقتی کاربر داخل پنل چیزی رو read می‌کنه)
+  // وقتی پنل بازه، لحظه‌به‌لحظه با unreadCount همگام‌ش کن و در localStorage هم ذخیره کن
   useEffect(() => {
     if (isNotifOpen) {
       setLastSeenCount(unreadCount);
+      localStorage.setItem(LAST_SEEN_KEY, String(unreadCount));
     }
   }, [isNotifOpen, unreadCount]);
 
-  // فقط وقتی عدد جدید نشون بده که از آخرین بار دیدنِ کاربر بیشتر شده باشه
   const hasNewNotifications = unreadCount > lastSeenCount;
   const newCount = Math.max(0, unreadCount - lastSeenCount);
 
@@ -29,7 +34,6 @@ export default function DashboardHeader({ notifications, unreadCount, onMarkAsRe
       </div>
 
       <div className="flex items-center gap-4">
-        {/* کلید اعلان‌ها */}
         <div className="relative">
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -46,7 +50,6 @@ export default function DashboardHeader({ notifications, unreadCount, onMarkAsRe
               </span>
             )}
           </button>
-          {/* باکس پاپ‌اور منوی اعلانات */}
           {isNotifOpen && (
             <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
               <div className="p-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
