@@ -8,6 +8,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsGrid from "@/components/dashboard/StatsGrid";
 import TransactionList from "@/components/dashboard/TransactionList";
 import TransactionModal from "@/components/dashboard/TransactionModal";
+import AiAnalysisCard from "@/components/dashboard/AiAnalysisCard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -170,7 +171,7 @@ export default function DashboardPage() {
           onMarkAsRead={handleMarkAsRead}
           onLogout={handleLogout}
         />
-
+<AiAnalysisCard />
         <StatsGrid summary={stats.summary} />
 
         <TransactionList
