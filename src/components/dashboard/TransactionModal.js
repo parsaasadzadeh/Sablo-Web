@@ -5,6 +5,7 @@ import api from "@/lib/axios";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
+import { useCurrency } from "@/context/currencyContext";
 
 const TYPE_VARIANTS = [
   { key: "INCOME", label: "درآمد" },
@@ -13,26 +14,23 @@ const TYPE_VARIANTS = [
   { key: "LOAN", label: "وام" }
 ];
 
-// فقط رقم‌ها رو نگه می‌داره و با کاما جدا می‌کنه، مثلاً "5000000" => "5,000,000"
 const formatAmount = (value) => {
   if (value === null || value === undefined) return "";
   const digitsOnly = String(value).replace(/[^\d]/g, "");
   if (!digitsOnly) return "";
-  // جلوگیری از صفرهای اضافی در ابتدای عدد (مثلاً "007" => "7")
   const normalized = String(Number(digitsOnly));
   return Number(normalized).toLocaleString("en-US");
 };
 
-// کاماها رو حذف می‌کنه و یه عدد خالص برمی‌گردونه (برای ارسال به سرور)
 const unformatAmount = (value) => {
   const digitsOnly = String(value ?? "").replace(/[^\d]/g, "");
   return digitsOnly ? Number(digitsOnly) : 0;
 };
 
-// editingTransaction: null => حالت افزودن تراکنش جدید
-// editingTransaction: {..} => حالت ویرایش یک تراکنش موجود
 export default function TransactionModal({ isOpen, onClose, onRefreshData, editingTransaction }) {
   const isEditMode = Boolean(editingTransaction);
+  const { currency } = useCurrency();
+  const unitLabel = currency === "IRT" ? "تومان" : "ریال";
 
   const [type, setType] = useState("EXPENSE");
   const [amount, setAmount] = useState("");
@@ -41,13 +39,16 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
   const [dueDate, setDueDate] = useState("");
   const [formLoading, setFormLoading] = useState(false);
 
-  // هر بار مودال باز می‌شه یا تراکنش در حال ویرایش عوض می‌شه، فرم رو پر یا خالی می‌کنیم
   useEffect(() => {
     if (!isOpen) return;
 
     if (editingTransaction) {
       setType(editingTransaction.type);
-      setAmount(formatAmount(editingTransaction.amount));
+      // موقع ویرایش، مبلغ از دیتابیس ریاله — اگه تومانه تقسیم بر ۱۰ کن
+      const displayAmount = currency === "IRT"
+        ? Math.round(editingTransaction.amount / 10)
+        : editingTransaction.amount;
+      setAmount(formatAmount(displayAmount));
       setTitle(editingTransaction.title ?? "");
       setDescription(editingTransaction.description ?? "");
       setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
@@ -76,14 +77,16 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
       return;
     }
 
+    // اگه تومانه ضربدر ۱۰ میکنیم تا ریال بشه
+    const amountInRial = currency === "IRT" ? numericAmount * 10 : numericAmount;
+
     setFormLoading(true);
     try {
       const formattedDueDate = dueDate ? new Date(dueDate).toISOString() : undefined;
 
       if (isEditMode) {
-        // ویرایش: نوع تراکنش قابل تغییر نیست، فقط بقیه فیلدها آپدیت می‌شن
         await api.put(`/finance/update/${editingTransaction._id}`, {
-          amount: numericAmount,
+          amount: amountInRial,
           title,
           description,
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined
@@ -91,7 +94,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
       } else {
         await api.post("/finance/add", {
           type,
-          amount: numericAmount,
+          amount: amountInRial,
           title,
           description,
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined
@@ -125,6 +128,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
         </h3>
 
         <form onSubmit={handleFormSubmit} className="space-y-4">
+          {/* نوع تراکنش */}
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">نوع تراکنش</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -135,7 +139,9 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
                   disabled={isEditMode}
                   onClick={() => setType(item.key)}
                   className={`py-2 text-[11px] font-semibold rounded-xl border transition-all ${
-                    type === item.key ? "bg-[#0F6F5C] text-white border-[#0F6F5C]" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"
+                    type === item.key
+                      ? "bg-[#0F6F5C] text-white border-[#0F6F5C]"
+                      : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"
                   } ${isEditMode ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {item.label}
@@ -147,6 +153,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
             )}
           </div>
 
+          {/* عنوان */}
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">عنوان</label>
             <input
@@ -158,18 +165,27 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
             />
           </div>
 
+          {/* مبلغ — label و placeholder داینامیک */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5">مبلغ (ریال)</label>
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5">
+              مبلغ ({unitLabel})
+            </label>
             <input
               type="text"
               inputMode="numeric"
-              placeholder="مثال: 5,000,000"
+              placeholder={`مبلغ را به ${unitLabel} وارد کنید`}
               value={amount}
               onChange={handleAmountChange}
               className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider"
             />
+            <p className="text-[10px] text-[#8A8273] mt-1">
+              {currency === "IRT"
+                ? "⚠️ مبلغ را به تومان وارد کنید — به‌صورت خودکار به ریال تبدیل می‌شود"
+                : "✓ مبلغ را به ریال وارد کنید"}
+            </p>
           </div>
 
+          {/* تاریخ سررسید */}
           {(type === "LOAN" || type === "INSTALLMENT") && (
             <div>
               <label className="block text-xs font-medium text-amber-800 mb-1.5">تاریخ سررسید (شمسی)</label>
@@ -184,6 +200,7 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
             </div>
           )}
 
+          {/* توضیحات */}
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5">توضیحات (اختیاری)</label>
             <textarea
@@ -195,15 +212,21 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
             />
           </div>
 
+          {/* دکمه‌ها */}
           <div className="flex gap-2.5 pt-2">
             <button
               type="submit"
               disabled={formLoading}
               className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5"
             >
-              {formLoading && <Loader2 size={14} className="animate-spin" />} {isEditMode ? "بروزرسانی تراکنش" : "ذخیره تراکنش"}
+              {formLoading && <Loader2 size={14} className="animate-spin" />}
+              {isEditMode ? "بروزرسانی تراکنش" : "ذخیره تراکنش"}
             </button>
-            <button type="button" onClick={onClose} className="bg-gray-100 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-xs">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-100 text-gray-700 font-semibold rounded-xl px-4 py-2.5 text-xs"
+            >
               انصراف
             </button>
           </div>
