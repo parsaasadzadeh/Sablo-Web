@@ -180,8 +180,8 @@ export default function TransactionModal({ isOpen, onClose, onRefreshData, editi
             />
             <p className="text-[10px] text-[#8A8273] mt-1">
               {currency === "IRT"
-                ? "⚠️ مبلغ را به تومان وارد کنید — به‌صورت خودکار به ریال تبدیل می‌شود"
-                : "✓ مبلغ را به ریال وارد کنید"}
+                ? "مبلغ را به تومان وارد کنید"
+                : "مبلغ را به ریال وارد کنید"}
             </p>
           </div>
 
