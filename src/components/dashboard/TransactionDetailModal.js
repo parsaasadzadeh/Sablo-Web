@@ -1,6 +1,7 @@
 "use client";
 import { X, CheckCircle, Clock, Pencil, Trash2 } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
+import { useCurrency } from "@/context/currencyContext";
 
 const TYPE_LABELS = {
   INCOME: "درآمد",
@@ -17,6 +18,8 @@ const TYPE_COLORS = {
 };
 
 export default function TransactionDetailModal({ transaction, onClose, onEdit, onDelete, onPayInstallment }) {
+  const { display, unit } = useCurrency();
+
   if (!transaction) return null;
   const tx = transaction;
   const isPositive = tx.type === "INCOME" || tx.type === "LOAN";
@@ -47,11 +50,12 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
         <div className={`rounded-2xl p-4 mb-4 ${isPositive ? "bg-emerald-50" : "bg-rose-50"}`}>
           <span className="text-[11px] text-[#8A8273] block mb-1">مبلغ تراکنش</span>
           <span className={`text-xl font-bold tabular tracking-wide ${isPositive ? "text-emerald-700" : "text-rose-700"}`}>
-            {isPositive ? "+" : "-"}{tx.amount.toLocaleString()} <span className="text-xs font-normal">ریال</span>
+            {isPositive ? "+" : "-"}{display(tx.amount)}{" "}
+            <span className="text-xs font-normal">{unit}</span>
           </span>
         </div>
 
-        {/* توضیحات کامل */}
+        {/* توضیحات */}
         {tx.description && (
           <div className="mb-4">
             <span className="text-[11px] text-[#8A8273] block mb-1">توضیحات</span>
@@ -82,9 +86,13 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
             <div className="flex items-center justify-between text-xs">
               <span className="text-[#8A8273]">وضعیت پرداخت</span>
               {tx.isPaid ? (
-                <span className="text-emerald-600 font-medium flex items-center gap-1"><CheckCircle size={13} /> پرداخت شده</span>
+                <span className="text-emerald-600 font-medium flex items-center gap-1">
+                  <CheckCircle size={13} /> پرداخت شده
+                </span>
               ) : (
-                <span className="text-amber-600 font-medium flex items-center gap-1"><Clock size={13} /> پرداخت نشده</span>
+                <span className="text-amber-600 font-medium flex items-center gap-1">
+                  <Clock size={13} /> پرداخت نشده
+                </span>
               )}
             </div>
           )}
