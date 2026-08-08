@@ -123,7 +123,7 @@ export default function CtaSection() {
 
           {/* Myket */}
           <a
-            href="YOUR_MYKET_URL"
+            href="https://myket.ir/app/com.sabloapp.sablo"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-5 text-right transition hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/[0.09]"
@@ -144,7 +144,7 @@ export default function CtaSection() {
 
           {/* Bazaar */}
           <a
-            href="YOUR_BAZAAR_URL"
+            href="https://cafebazaar.ir/app/com.sabloapp.sablo"
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-5 text-right transition hover:-translate-y-1 hover:border-green-400/30 hover:bg-white/[0.09]"
