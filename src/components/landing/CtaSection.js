@@ -103,7 +103,7 @@ export default function CtaSection() {
         <div className="mx-auto mt-12 grid max-w-3xl gap-4 sm:grid-cols-3">
           {/* APK */}
           <a
-            href="/downloads/sablo.apk"
+            href="https://rbofs27hxnaifjf5.public.blob.vercel-storage.com/Sablo.apk"
             download
             className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-5 text-right transition hover:-translate-y-1 hover:border-blue-400/30 hover:bg-white/[0.09]"
           >
