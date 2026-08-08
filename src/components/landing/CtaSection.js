@@ -1,31 +1,21 @@
 import Link from 'next/link';
 import { ArrowRight, Download } from 'lucide-react';
 
-// آیکن مایکت با رنگ رسمی برند (آبی #00B0FF طبق راهنمای برند مایکت)
+// آیکن ساده مایکت با رنگ رسمی برند (آبی #00B0FF طبق راهنمای برند مایکت)
 function MyketIcon({ size = 22 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className="shrink-0"
+    >
       <circle cx="12" cy="12" r="11" fill="#00B0FF" />
       <path
         d="M7 16V8l5 4 5-4v8"
         stroke="white"
         strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// آیکن ساده کافه‌بازار با رنگ رسمی برند (سبز #6EC82C طبق راهنمای برند بازار)
-function BazaarIcon({ size = 22 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="shrink-0">
-      <circle cx="12" cy="12" r="11" fill="#6EC82C" />
-      <path
-        d="M8 7h5.5a2.5 2.5 0 0 1 0 5H8V7zm0 5h6a2.5 2.5 0 0 1 0 5H8v-5z"
-        stroke="white"
-        strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -43,7 +33,6 @@ export default function CtaSection() {
         <p className="text-xs opacity-90 leading-6 mb-8 max-w-xl mx-auto">
           دیگر پول‌هایتان را کورکورانه خرج نکنید. با سابلو، آینده مالی خود را به دست بگیرید و با آرامش خاطر دخل و خرجتان را مدیریت کنید.
         </p>
-
         <Link
           href="/dashboard"
           className="h-12 bg-white text-[#0F6F5C] hover:bg-gray-100 text-xs font-bold px-8 rounded-xl transition-all shadow inline-flex items-center justify-center gap-2 mb-8"
@@ -51,11 +40,9 @@ export default function CtaSection() {
           ورود رایگان به داشبورد مالی <ArrowRight size={16} />
         </Link>
 
-      
- 
           {/* مایکت */}
-          
-            href="https://myket.ir/app/com.sabloapp.sablo"
+          <a
+            href="https://myket.ir/app/com.parsaas.Sablo"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
@@ -64,20 +51,6 @@ export default function CtaSection() {
             <span className="flex flex-col items-start leading-tight text-left">
               <span className="text-[10px] opacity-80">دریافت از</span>
               <span className="text-sm font-bold">مایکت</span>
-            </span>
-          </a>
-
-          {/* کافه‌بازار */}
-          
-            href="https://cafebazaar.ir/app/com.sabloapp.sablo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
-          >
-            <BazaarIcon size={22} />
-            <span className="flex flex-col items-start leading-tight text-left">
-              <span className="text-[10px] opacity-80">دریافت از</span>
-              <span className="text-sm font-bold">بازار</span>
             </span>
           </a>
         </div>
