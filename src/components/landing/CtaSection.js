@@ -55,9 +55,9 @@ export default function CtaSection() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           {/* دانلود مستقیم APK */}
           
-            href="https://rbofs27hxnaifjf5.public.blob.vercel-storage.com/Sablo.apk"
-            className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
-          >
+           href="https://rbofs27hxnaifjf5.public.blob.vercel-storage.com/Sablo.apk"
+  className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
+>
             <Download size={22} className="shrink-0" />
             <span className="flex flex-col items-start leading-tight text-left">
               <span className="text-[10px] opacity-80">دانلود مستقیم</span>
