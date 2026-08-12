@@ -1,16 +1,9 @@
 import Link from 'next/link';
-import { ArrowRight, Download } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
-// آیکن ساده مایکت با رنگ رسمی برند (آبی #00B0FF طبق راهنمای برند مایکت)
 function MyketIcon({ size = 22 }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      className="shrink-0"
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="shrink-0">
       <circle cx="12" cy="12" r="11" fill="#00B0FF" />
       <path
         d="M7 16V8l5 4 5-4v8"
@@ -40,20 +33,18 @@ export default function CtaSection() {
           ورود رایگان به داشبورد مالی <ArrowRight size={16} />
         </Link>
 
-          {/* مایکت */}
-          <a
-            href="https://myket.ir/app/com.parsaas.Sablo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
-          >
-            <MyketIcon size={22} />
-            <span className="flex flex-col items-start leading-tight text-left">
-              <span className="text-[10px] opacity-80">دریافت از</span>
-              <span className="text-sm font-bold">مایکت</span>
-            </span>
-          </a>
-        </div>
+        
+          href="https://myket.ir/app/com.parsaas.Sablo"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
+        >
+          <MyketIcon size={22} />
+          <span className="flex flex-col items-start leading-tight text-left">
+            <span className="text-[10px] opacity-80">دریافت از</span>
+            <span className="text-sm font-bold">مایکت</span>
+          </span>
+        </a>
       </div>
     </section>
   );
