@@ -3,7 +3,13 @@ import { ArrowRight } from 'lucide-react';
 
 function MyketIcon({ size = 22 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      className="shrink-0"
+    >
       <circle cx="12" cy="12" r="11" fill="#00B0FF" />
       <path
         d="M7 16V8l5 4 5-4v8"
@@ -26,25 +32,28 @@ export default function CtaSection() {
         <p className="text-xs opacity-90 leading-6 mb-8 max-w-xl mx-auto">
           دیگر پول‌هایتان را کورکورانه خرج نکنید. با سابلو، آینده مالی خود را به دست بگیرید و با آرامش خاطر دخل و خرجتان را مدیریت کنید.
         </p>
-        <Link
-          href="/dashboard"
-          className="h-12 bg-white text-[#0F6F5C] hover:bg-gray-100 text-xs font-bold px-8 rounded-xl transition-all shadow inline-flex items-center justify-center gap-2 mb-8"
-        >
-          ورود رایگان به داشبورد مالی <ArrowRight size={16} />
-        </Link>
 
-        
-          href="https://myket.ir/app/com.parsaas.Sablo"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
-        >
-          <MyketIcon size={22} />
-          <span className="flex flex-col items-start leading-tight text-left">
-            <span className="text-[10px] opacity-80">دریافت از</span>
-            <span className="text-sm font-bold">مایکت</span>
-          </span>
-        </a>
+        <div className="flex flex-col items-center gap-4">
+          <Link
+            href="/dashboard"
+            className="h-12 bg-white text-[#0F6F5C] hover:bg-gray-100 text-xs font-bold px-8 rounded-xl transition-all shadow inline-flex items-center justify-center gap-2"
+          >
+            ورود رایگان به داشبورد مالی <ArrowRight size={16} />
+          </Link>
+
+          
+            href="https://myket.ir/app/com.parsaas.Sablo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all"
+          >
+            <MyketIcon size={22} />
+            <span className="flex flex-col items-start leading-tight text-left">
+              <span className="text-[10px] opacity-80">دریافت از</span>
+              <span className="text-sm font-bold">مایکت</span>
+            </span>
+          </a>
+        </div>
       </div>
     </section>
   );
