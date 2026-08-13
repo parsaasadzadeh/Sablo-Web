@@ -11,7 +11,7 @@ import TransactionList from "@/components/dashboard/TransactionList";
 import TransactionModal from "@/components/dashboard/TransactionModal";
 import AiAnalysisCard from "@/components/dashboard/AiAnalysisCard";
 import CurrencyToggle from "@/components/dashboard/CurrencyToggle";
-import CurrencyToggle from "@/components/dashboard/QuickNav";
+import QuickNav  from "@/components/dashboard/QuickNav";
 
 export default function DashboardPage() {
   const router = useRouter();
