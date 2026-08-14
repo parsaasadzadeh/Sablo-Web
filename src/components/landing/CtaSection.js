@@ -50,7 +50,7 @@ export default function CtaSection() {
 
           {/* مایکت */}
           <a
-            href="https://myket.ir/app/com.parsaas.Sablo"
+            href="https://myket.ir/app/com.sabloapp.sablo"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl px-4 py-2 transition-all backdrop-blur-sm"
