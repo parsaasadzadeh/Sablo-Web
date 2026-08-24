@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Plus, Target, Loader2 } from "lucide-react";
 import api from "@/lib/axios";
+import DatePicker from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 import { useCurrency } from "@/context/currencyContext";
 import GoalCard from "@/components/reports/GoalCard";
 
@@ -40,9 +43,11 @@ export default function GoalsContent() {
     }
     const numericAmount = Number(amount.replace(/,/g, ""));
     const amountInRial = currency === "IRT" ? numericAmount * 10 : numericAmount;
+    // deadline یک آبجکت Date هست (از DatePicker شمسی) — قبل از ارسال به ISO تبدیل میشه
+    const formattedDeadline = new Date(deadline).toISOString();
     setFormLoading(true);
     try {
-      await api.post("/goals", { title, targetAmount: amountInRial, deadline });
+      await api.post("/goals", { title, targetAmount: amountInRial, deadline: formattedDeadline });
       setTitle(""); setAmount(""); setDeadline("");
       setShowForm(false);
       fetchGoals();
@@ -73,7 +78,12 @@ export default function GoalsContent() {
 
   return (
     <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] p-4 sm:p-8 font-sans">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap'); .font-sans { font-family: 'Vazirmatn', sans-serif; }`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .font-sans { font-family: 'Vazirmatn', sans-serif; }
+        .rmdp-input { width: 100% !important; height: 42px !important; border-radius: 0.75rem !important; background-color: rgb(255 251 235 / 0.5) !important; border-color: rgb(253 230 138) !important; font-size: 0.875rem !important; padding: 0.625rem 0.875rem !important; outline: none !important; text-align: right !important; }
+        .rmdp-input:focus { border-color: #0F6F5C !important; }
+      `}</style>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <button
@@ -118,13 +128,15 @@ export default function GoalsContent() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-amber-800 mb-1.5 text-right">ددلاین</label>
-              <input
-                type="date"
+              <label className="block text-xs font-medium text-amber-800 mb-1.5 text-right">ددلاین (شمسی)</label>
+              <DatePicker
+                calendar={persian}
+                locale={persian_fa}
                 value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C]"
+                onChange={(dateObject) => setDeadline(dateObject?.isValid ? dateObject.toDate() : "")}
+                minDate={new Date()}
+                calendarPosition="bottom-right"
+                placeholder="انتخاب تاریخ"
               />
             </div>
             {error && <p className="text-xs text-red-500 text-right">{error}</p>}
