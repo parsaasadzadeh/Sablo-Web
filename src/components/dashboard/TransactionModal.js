@@ -61,7 +61,8 @@ export default function TransactionModal({
       setDescription(editingTransaction.description ?? "");
       setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
       setTransactionDate("");
-      setCategory(editingTransaction.categoryId ?? null);
+      // ✅ اصلاح شد: بک‌اند فیلد را با نام «category» برمی‌گرداند، نه «categoryId»
+      setCategory(editingTransaction.category ?? null);
     } else {
       setType("EXPENSE");
       setAmount("");
@@ -98,7 +99,8 @@ export default function TransactionModal({
           amount: amountInRial,
           title,
           description,
-          categoryId: type === "EXPENSE" ? category : undefined,
+          // ✅ اصلاح شد: باید «category» باشد تا با بک‌اند و نسخه‌ی موبایل هماهنگ باشد
+          category: type === "EXPENSE" ? category : undefined,
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
         });
       } else {
@@ -107,7 +109,8 @@ export default function TransactionModal({
           amount: amountInRial,
           title,
           description,
-          categoryId: type === "EXPENSE" ? category : undefined,
+          // ✅ اصلاح شد: باید «category» باشد تا با بک‌اند و نسخه‌ی موبایل هماهنگ باشد
+          category: type === "EXPENSE" ? category : undefined,
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
           // اگه خالی باشه بک‌اند خودش امروز رو می‌زنه
           ...(formattedTransactionDate && { date: formattedTransactionDate }),
