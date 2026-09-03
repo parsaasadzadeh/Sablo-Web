@@ -37,6 +37,9 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // ✅ دسته‌بندی‌ها — برای نمایش در مدال ثبت/ویرایش تراکنش (فقط نوع EXPENSE)
+  const [categories, setCategories] = useState([]);
+
   const fetchFinanceData = useCallback(async (page) => {
     try {
       const token = localStorage.getItem("token");
@@ -46,11 +49,13 @@ export default function DashboardPage() {
       }
 
       setLoading(true);
-      const [statsRes, listRes, notifRes, meRes] = await Promise.all([
+      const [statsRes, listRes, notifRes, meRes, categoriesRes] = await Promise.all([
         api.get("/finance/stats"),
         api.get(`/finance/my-data?page=${page}&limit=10`),
         api.get("/notifications"),
         api.get("/auth/me"),
+        // ⚠️ اسم اندپوینت رو با بک‌اند چک کن — اگه فرق داره همینجا عوضش کن
+        api.get("/finance/categories"),
       ]);
 
       setStats(statsRes.data);
@@ -60,6 +65,11 @@ export default function DashboardPage() {
       setNotifications(notifRes.data.notifications);
       setUnreadCount(notifRes.data.unreadCount);
       setInitialCurrency(meRes.data.user.currency ?? "IRT");
+
+      // ⚠️ بسته به شکل واقعی response تنظیم کن:
+      // اگه خودِ آرایه رو برمی‌گردونه: categoriesRes.data
+      // اگه داخل یک کلید هست: categoriesRes.data.categories
+      setCategories(categoriesRes.data.categories ?? categoriesRes.data ?? []);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       if (error.response?.status === 401) {
@@ -204,6 +214,7 @@ export default function DashboardPage() {
           onClose={handleCloseModal}
           onRefreshData={() => fetchFinanceData(currentPage)}
           editingTransaction={editingTransaction}
+          categories={categories}
         />
       </div>
     </CurrencyProvider>
