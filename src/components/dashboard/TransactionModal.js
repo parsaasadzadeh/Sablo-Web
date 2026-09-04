@@ -31,8 +31,11 @@ export default function TransactionModal({
   onClose,
   onRefreshData,
   editingTransaction,
-  // دسته‌بندی‌ها — اختیاری؛ صفحه‌هایی که ندارن مشکل نمی‌خورن
   categories = [],
+  // تابع ساخت دسته‌بندی جدید — اختیاری
+  // امضا: (label, icon) => Promise<{ success, category?, message? }>
+  onCreateCategory,
+  categoryFormLoading = false,
 }) {
   const isEditMode = Boolean(editingTransaction);
   const { currency } = useCurrency();
@@ -43,35 +46,54 @@ export default function TransactionModal({
   const [title,           setTitle]           = useState("");
   const [description,     setDescription]     = useState("");
   const [dueDate,         setDueDate]         = useState("");
-  // تاریخ تراکنش — خالی یعنی «امروز»
   const [transactionDate, setTransactionDate] = useState("");
   const [category,        setCategory]        = useState(null);
   const [formLoading,     setFormLoading]     = useState(false);
+
+  // فرم داخلی دسته‌بندی جدید
+  const [showNewCat,  setShowNewCat]  = useState(false);
+  const [newCatLabel, setNewCatLabel] = useState("");
+  const [newCatIcon,  setNewCatIcon]  = useState("");
+  const [newCatError, setNewCatError] = useState(null);
+
+  const openNewCat = () => {
+    setNewCatLabel(""); setNewCatIcon(""); setNewCatError(null);
+    setShowNewCat(true);
+  };
+  const closeNewCat = () => { setShowNewCat(false); setNewCatError(null); };
+
+  const submitNewCat = async () => {
+    if (!onCreateCategory) return;
+    const label = newCatLabel.trim();
+    if (!label) { setNewCatError("نام دسته‌بندی را وارد کنید"); return; }
+    setNewCatError(null);
+    const result = await onCreateCategory(label, newCatIcon.trim() || "📦");
+    if (result.success) {
+      setCategory(result.category.id);
+      closeNewCat();
+    } else {
+      setNewCatError(result.message);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
     if (editingTransaction) {
       setType(editingTransaction.type);
-      const displayAmount =
-        currency === "IRT"
-          ? Math.round(editingTransaction.amount / 10)
-          : editingTransaction.amount;
+      const displayAmount = currency === "IRT"
+        ? Math.round(editingTransaction.amount / 10)
+        : editingTransaction.amount;
       setAmount(formatAmount(displayAmount));
       setTitle(editingTransaction.title ?? "");
       setDescription(editingTransaction.description ?? "");
       setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
       setTransactionDate("");
-      // ✅ اصلاح شد: بک‌اند فیلد را با نام «category» برمی‌گرداند، نه «categoryId»
-      setCategory(editingTransaction.category ?? null);
+      setCategory(editingTransaction.categoryId ?? null);
     } else {
-      setType("EXPENSE");
-      setAmount("");
-      setTitle("");
-      setDescription("");
-      setDueDate("");
-      setTransactionDate("");
-      setCategory(null);
+      setType("EXPENSE"); setAmount(""); setTitle("");
+      setDescription(""); setDueDate(""); setTransactionDate(""); setCategory(null);
     }
+    setShowNewCat(false);
   }, [isOpen, editingTransaction]);
 
   if (!isOpen) return null;
@@ -80,15 +102,12 @@ export default function TransactionModal({
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-
     const numericAmount = unformatAmount(amount);
     if (!numericAmount || !title.trim()) {
       alert("لطفاً عنوان و مبلغ را وارد کنید");
       return;
     }
-
     const amountInRial = currency === "IRT" ? numericAmount * 10 : numericAmount;
-
     setFormLoading(true);
     try {
       const formattedDueDate         = dueDate         ? new Date(dueDate).toISOString()         : undefined;
@@ -96,27 +115,18 @@ export default function TransactionModal({
 
       if (isEditMode) {
         await api.put(`/finance/update/${editingTransaction._id}`, {
-          amount: amountInRial,
-          title,
-          description,
-          // ✅ اصلاح شد: باید «category» باشد تا با بک‌اند و نسخه‌ی موبایل هماهنگ باشد
-          category: type === "EXPENSE" ? category : undefined,
+          amount: amountInRial, title, description,
+          categoryId: type === "EXPENSE" ? category : undefined,
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
         });
       } else {
         await api.post("/finance/add", {
-          type,
-          amount: amountInRial,
-          title,
-          description,
-          // ✅ اصلاح شد: باید «category» باشد تا با بک‌اند و نسخه‌ی موبایل هماهنگ باشد
-          category: type === "EXPENSE" ? category : undefined,
+          type, amount: amountInRial, title, description,
+          categoryId: type === "EXPENSE" ? category : undefined,
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
-          // اگه خالی باشه بک‌اند خودش امروز رو می‌زنه
           ...(formattedTransactionDate && { date: formattedTransactionDate }),
         });
       }
-
       onClose();
       onRefreshData();
     } catch (error) {
@@ -127,6 +137,8 @@ export default function TransactionModal({
     }
   };
 
+  const showCategorySection = type === "EXPENSE" && (categories.length > 0 || onCreateCategory);
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50">
       <style>{`
@@ -135,7 +147,6 @@ export default function TransactionModal({
       `}</style>
 
       <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 border border-[#EDE8DC] shadow-xl max-h-[92vh] overflow-y-auto">
-        {/* هدر */}
         <div className="w-10 h-1 bg-[#EDE8DC] rounded-full mx-auto mb-4 sm:hidden" />
         <h3 className="text-base font-bold text-[#26241F] mb-4 text-right">
           {isEditMode ? "ویرایش تراکنش" : "ثبت تراکنش هوشمند"}
@@ -152,7 +163,7 @@ export default function TransactionModal({
                   key={item.key}
                   type="button"
                   disabled={isEditMode}
-                  onClick={() => { setType(item.key); setCategory(null); }}
+                  onClick={() => { setType(item.key); setCategory(null); setShowNewCat(false); }}
                   className={`py-2 text-[11px] font-semibold rounded-xl border transition-all ${
                     type === item.key
                       ? "bg-[#0F6F5C] text-white border-[#0F6F5C]"
@@ -164,7 +175,9 @@ export default function TransactionModal({
               ))}
             </div>
             {isEditMode && (
-              <p className="text-[10px] text-[#8A8273] mt-1.5 text-right">نوع تراکنش پس از ثبت قابل تغییر نیست.</p>
+              <p className="text-[10px] text-[#8A8273] mt-1.5 text-right">
+                نوع تراکنش پس از ثبت قابل تغییر نیست.
+              </p>
             )}
           </div>
 
@@ -191,18 +204,20 @@ export default function TransactionModal({
               placeholder={`مبلغ را به ${unitLabel} وارد کنید`}
               value={amount}
               onChange={handleAmountChange}
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider text-left ltr"
               dir="ltr"
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider text-left"
             />
             <p className="text-[10px] text-[#8A8273] mt-1 text-right">
               {currency === "IRT" ? "مبلغ را به تومان وارد کنید" : "مبلغ را به ریال وارد کنید"}
             </p>
           </div>
 
-          {/* تاریخ تراکنش — برای ثبت تراکنش‌های قدیمی */}
+          {/* تاریخ تراکنش */}
           {!isEditMode && (
             <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">تاریخ تراکنش</label>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
+                تاریخ تراکنش
+              </label>
               <div className="flex flex-row-reverse gap-2 items-start">
                 <button
                   type="button"
@@ -220,9 +235,7 @@ export default function TransactionModal({
                     calendar={persian}
                     locale={persian_fa}
                     value={transactionDate}
-                    onChange={(dateObject) =>
-                      setTransactionDate(dateObject?.isValid ? dateObject.toDate() : "")
-                    }
+                    onChange={(d) => setTransactionDate(d?.isValid ? d.toDate() : "")}
                     calendarPosition="bottom-right"
                     placeholder="یا یک تاریخ دیگر انتخاب کن"
                   />
@@ -234,11 +247,31 @@ export default function TransactionModal({
             </div>
           )}
 
-          {/* دسته‌بندی — فقط برای EXPENSE و وقتی categories داریم */}
-          {type === "EXPENSE" && categories.length > 0 && (
+          {/* دسته‌بندی */}
+          {showCategorySection && (
             <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">دسته‌بندی (اختیاری)</label>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
+                دسته‌بندی (اختیاری)
+              </label>
+
+              {/* چیپ‌ها */}
               <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {/* دکمه دسته‌بندی جدید */}
+                {onCreateCategory && (
+                  <button
+                    type="button"
+                    onClick={() => (showNewCat ? closeNewCat() : openNewCat())}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-semibold border-2 border-dashed transition-colors ${
+                      showNewCat
+                        ? "border-[#0F6F5C] bg-[#0F6F5C]/10 text-[#0F6F5C]"
+                        : "border-[#0F6F5C] text-[#0F6F5C] hover:bg-[#0F6F5C]/5"
+                    }`}
+                  >
+                    <span>➕</span>
+                    <span>دسته‌بندی جدید</span>
+                  </button>
+                )}
+
                 {/* بدون دسته */}
                 <button
                   type="button"
@@ -269,10 +302,61 @@ export default function TransactionModal({
                   </button>
                 ))}
               </div>
+
+              {/* فرم دسته‌بندی جدید — زیر چیپ‌ها باز میشه */}
+              {showNewCat && (
+                <div className="mt-3 bg-[#FCFBF8] border border-[#E5E1D6] rounded-2xl p-4 space-y-3">
+                  <div className="flex flex-row-reverse gap-2 items-center">
+                    {/* آیکون — اختیاری */}
+                    <input
+                      type="text"
+                      placeholder="📦"
+                      maxLength={4}
+                      value={newCatIcon}
+                      onChange={(e) => setNewCatIcon(e.target.value)}
+                      className="w-14 text-center text-lg bg-white border border-[#E5E1D6] rounded-xl py-2 outline-none focus:border-[#0F6F5C]"
+                    />
+                    {/* نام دسته */}
+                    <input
+                      type="text"
+                      placeholder="مثال: گازوئیل"
+                      maxLength={30}
+                      value={newCatLabel}
+                      onChange={(e) => setNewCatLabel(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), submitNewCat())}
+                      className="flex-1 text-sm text-right bg-white border border-[#E5E1D6] rounded-xl px-3 py-2.5 outline-none focus:border-[#0F6F5C]"
+                    />
+                  </div>
+
+                  {newCatError && (
+                    <p className="text-[11px] text-red-500 text-right">{newCatError}</p>
+                  )}
+
+                  <div className="flex flex-row-reverse gap-2">
+                    <button
+                      type="button"
+                      onClick={submitNewCat}
+                      disabled={categoryFormLoading}
+                      className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white text-xs font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5"
+                    >
+                      {categoryFormLoading
+                        ? <Loader2 size={13} className="animate-spin" />
+                        : "افزودن"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeNewCat}
+                      className="bg-white border border-[#E5E1D6] text-[#8A8273] text-xs font-semibold rounded-xl px-4 py-2.5"
+                    >
+                      انصراف
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* تاریخ سررسید — فقط برای LOAN و INSTALLMENT */}
+          {/* تاریخ سررسید */}
           {(type === "LOAN" || type === "INSTALLMENT") && (
             <div>
               <label className="block text-xs font-medium text-amber-800 mb-1.5 text-right">
@@ -282,7 +366,7 @@ export default function TransactionModal({
                 calendar={persian}
                 locale={persian_fa}
                 value={dueDate}
-                onChange={(dateObject) => setDueDate(dateObject?.isValid ? dateObject.toDate() : "")}
+                onChange={(d) => setDueDate(d?.isValid ? d.toDate() : "")}
                 calendarPosition="bottom-right"
                 placeholder="انتخاب تاریخ سررسید"
               />
@@ -291,7 +375,9 @@ export default function TransactionModal({
 
           {/* توضیحات */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">توضیحات (اختیاری)</label>
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
+              توضیحات (اختیاری)
+            </label>
             <textarea
               rows={2}
               placeholder="توضیحات تکمیلی..."
