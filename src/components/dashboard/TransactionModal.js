@@ -297,7 +297,7 @@ export default function TransactionModal({
                         : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
                     }`}
                   >
-                    <span>{cat.icon}</span>
+                    {cat.icon && <span>{cat.icon}</span>}
                     <span>{cat.label}</span>
                   </button>
                 ))}
@@ -310,7 +310,7 @@ export default function TransactionModal({
                     {/* آیکون — اختیاری */}
                     <input
                       type="text"
-                      placeholder="📦"
+                      placeholder="🙂"
                       maxLength={4}
                       value={newCatIcon}
                       onChange={(e) => setNewCatIcon(e.target.value)}
