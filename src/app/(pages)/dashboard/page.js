@@ -91,7 +91,7 @@ export default function DashboardPage() {
   const handleCreateCategory = useCallback(async (label, icon) => {
     setCatLoading(true);
     try {
-      const res = await api.post("/finance/categories", { label, icon });
+      const res = await api.post("/finance/categories/custom", { label, icon });
       const newCat = res.data.category ?? res.data;
       // بدون نیاز به fetch مجدد — دسته جدید رو اضافه می‌کنیم
       setCategories((prev) => [...prev, newCat]);
