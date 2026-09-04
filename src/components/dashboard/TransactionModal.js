@@ -67,7 +67,7 @@ export default function TransactionModal({
     const label = newCatLabel.trim();
     if (!label) { setNewCatError("نام دسته‌بندی را وارد کنید"); return; }
     setNewCatError(null);
-    const result = await onCreateCategory(label, newCatIcon.trim() || "");
+    const result = await onCreateCategory(label, newCatIcon.trim());
     if (result.success) {
       setCategory(result.category.id);
       closeNewCat();
