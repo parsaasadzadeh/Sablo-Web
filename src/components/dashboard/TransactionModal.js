@@ -32,8 +32,6 @@ export default function TransactionModal({
   onRefreshData,
   editingTransaction,
   categories = [],
-  // تابع ساخت دسته‌بندی جدید — اختیاری
-  // امضا: (label, icon) => Promise<{ success, category?, message? }>
   onCreateCategory,
   categoryFormLoading = false,
 }) {
@@ -50,16 +48,12 @@ export default function TransactionModal({
   const [category,        setCategory]        = useState(null);
   const [formLoading,     setFormLoading]     = useState(false);
 
-  // فرم داخلی دسته‌بندی جدید
   const [showNewCat,  setShowNewCat]  = useState(false);
   const [newCatLabel, setNewCatLabel] = useState("");
   const [newCatIcon,  setNewCatIcon]  = useState("");
   const [newCatError, setNewCatError] = useState(null);
 
-  const openNewCat = () => {
-    setNewCatLabel(""); setNewCatIcon(""); setNewCatError(null);
-    setShowNewCat(true);
-  };
+  const openNewCat  = () => { setNewCatLabel(""); setNewCatIcon(""); setNewCatError(null); setShowNewCat(true); };
   const closeNewCat = () => { setShowNewCat(false); setNewCatError(null); };
 
   const submitNewCat = async () => {
@@ -88,7 +82,8 @@ export default function TransactionModal({
       setDescription(editingTransaction.description ?? "");
       setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
       setTransactionDate("");
-      setCategory(editingTransaction.categoryId ?? null);
+      // ← اینجا categoryId → category
+      setCategory(editingTransaction.category ?? null);
     } else {
       setType("EXPENSE"); setAmount(""); setTitle("");
       setDescription(""); setDueDate(""); setTransactionDate(""); setCategory(null);
@@ -115,14 +110,19 @@ export default function TransactionModal({
 
       if (isEditMode) {
         await api.put(`/finance/update/${editingTransaction._id}`, {
-          amount: amountInRial, title, description,
-          categoryId: type === "EXPENSE" ? category : undefined,
+          amount: amountInRial,
+          title,
+          description,
+          category: type === "EXPENSE" ? category : undefined, // ← categoryId → category
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
         });
       } else {
         await api.post("/finance/add", {
-          type, amount: amountInRial, title, description,
-          categoryId: type === "EXPENSE" ? category : undefined,
+          type,
+          amount: amountInRial,
+          title,
+          description,
+          category: type === "EXPENSE" ? category : undefined, // ← categoryId → category
           dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
           ...(formattedTransactionDate && { date: formattedTransactionDate }),
         });
@@ -254,9 +254,7 @@ export default function TransactionModal({
                 دسته‌بندی (اختیاری)
               </label>
 
-              {/* چیپ‌ها */}
               <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {/* دکمه دسته‌بندی جدید */}
                 {onCreateCategory && (
                   <button
                     type="button"
@@ -272,7 +270,6 @@ export default function TransactionModal({
                   </button>
                 )}
 
-                {/* بدون دسته */}
                 <button
                   type="button"
                   onClick={() => setCategory(null)}
@@ -303,11 +300,9 @@ export default function TransactionModal({
                 ))}
               </div>
 
-              {/* فرم دسته‌بندی جدید — زیر چیپ‌ها باز میشه */}
               {showNewCat && (
                 <div className="mt-3 bg-[#FCFBF8] border border-[#E5E1D6] rounded-2xl p-4 space-y-3">
                   <div className="flex flex-row-reverse gap-2 items-center">
-                    {/* آیکون — اختیاری */}
                     <input
                       type="text"
                       placeholder="🙂"
@@ -316,7 +311,6 @@ export default function TransactionModal({
                       onChange={(e) => setNewCatIcon(e.target.value)}
                       className="w-14 text-center text-lg bg-white border border-[#E5E1D6] rounded-xl py-2 outline-none focus:border-[#0F6F5C]"
                     />
-                    {/* نام دسته */}
                     <input
                       type="text"
                       placeholder="مثال: گازوئیل"
@@ -339,9 +333,7 @@ export default function TransactionModal({
                       disabled={categoryFormLoading}
                       className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white text-xs font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5"
                     >
-                      {categoryFormLoading
-                        ? <Loader2 size={13} className="animate-spin" />
-                        : "افزودن"}
+                      {categoryFormLoading ? <Loader2 size={13} className="animate-spin" /> : "افزودن"}
                     </button>
                     <button
                       type="button"
