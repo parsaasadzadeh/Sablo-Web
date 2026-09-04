@@ -11,11 +11,26 @@ const TYPE_LABELS = {
 };
 
 const TYPE_COLORS = {
-  INCOME: "bg-emerald-50 text-emerald-700",
-  EXPENSE: "bg-rose-50 text-rose-700",
-  INSTALLMENT: "bg-orange-50 text-orange-700",
-  LOAN: "bg-blue-50 text-blue-700"
+  INCOME:      "bg-emerald-50 text-emerald-700",
+  EXPENSE:     "bg-rose-50    text-rose-700",
+  INSTALLMENT: "bg-orange-50  text-orange-700",
+  LOAN:        "bg-blue-50    text-blue-700"
 };
+
+function CategoryDisplay({ tx }) {
+  if (tx.categoryInfo) {
+    return (
+      <span className="text-[#26241F] font-medium flex items-center gap-1 justify-end">
+        {tx.categoryInfo.icon && <span>{tx.categoryInfo.icon}</span>}
+        {tx.categoryInfo.label}
+      </span>
+    );
+  }
+  if (tx.category) {
+    return <span className="text-[#8A8273] font-medium">دسته‌بندی حذف‌شده</span>;
+  }
+  return <span className="text-[#8A8273] font-medium">عمومی</span>;
+}
 
 export default function TransactionDetailModal({ transaction, onClose, onEdit, onDelete, onPayInstallment }) {
   const { display, unit } = useCurrency();
@@ -65,10 +80,14 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
 
         {/* اطلاعات تکمیلی */}
         <div className="space-y-2.5 mb-5">
-          <div className="flex items-center justify-between text-xs border-b border-[#EDE8DC] pb-2.5">
-            <span className="text-[#8A8273]">دسته‌بندی</span>
-            <span className="text-[#26241F] font-medium">{tx.category || "عمومی"}</span>
-          </div>
+
+          {/* دسته‌بندی — فقط برای خرج نشون داده میشه */}
+          {tx.type === "EXPENSE" && (
+            <div className="flex items-center justify-between text-xs border-b border-[#EDE8DC] pb-2.5">
+              <span className="text-[#8A8273]">دسته‌بندی</span>
+              <CategoryDisplay tx={tx} />
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs border-b border-[#EDE8DC] pb-2.5">
             <span className="text-[#8A8273]">تاریخ ثبت</span>
