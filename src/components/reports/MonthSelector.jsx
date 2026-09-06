@@ -58,7 +58,7 @@ function buildMonthPeriod(jy, jm) {
   const days  = daysInJalaliMonth(jy, jm);
   const end   = fromJalali(jy, jm, days);
   const from  = new Date(Date.UTC(start.gy, start.gm - 1, start.gd, 0, 0, 0, 0)).toISOString();
-  const to    = new Date(Date.UTC(end.gy,   end.gm - 1,   end.gd,   23, 59, 59, 999)).toISOString();
+  const to    = new Date(Date.UTC(end.gy, end.gm - 1, end.gd, 23, 59, 59, 999)).toISOString();
   return { isAll: false, jy, jm, from, to, label: `${MONTHS[jm - 1]} ${jy}` };
 }
 
@@ -101,6 +101,7 @@ export default function MonthSelector({ display, unit, onPeriodChange }) {
 
   return (
     <div className="bg-white rounded-2xl border border-[#EDE8DC] p-5 mb-6">
+
       {/* دکمه همه */}
       <div className="flex justify-end mb-3">
         <button
@@ -115,19 +116,29 @@ export default function MonthSelector({ display, unit, onPeriodChange }) {
         </button>
       </div>
 
-      {/* انتخاب سال */}
+      {/* انتخاب سال — راست: سال بعد، چپ: سال قبل (منطق RTL) */}
       <div className="flex items-center justify-center gap-4 mb-3">
-        <button onClick={() => setJy((y) => y + 1)} className="text-2xl text-[#0F6F5C] px-2 hover:opacity-70">
+        {/* سال بعد — سمت راست */}
+        <button
+          onClick={() => setJy((y) => y + 1)}
+          className="text-2xl font-bold text-[#0F6F5C] w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[#F7F4EE] transition-colors"
+        >
           ›
         </button>
-        <span className="text-base font-extrabold text-[#26241F]">{jy}</span>
-        <button onClick={() => setJy((y) => y - 1)} className="text-2xl text-[#0F6F5C] px-2 hover:opacity-70">
+
+        <span className="text-base font-extrabold text-[#26241F] w-16 text-center">{jy}</span>
+
+        {/* سال قبل — سمت چپ */}
+        <button
+          onClick={() => setJy((y) => y - 1)}
+          className="text-2xl font-bold text-[#0F6F5C] w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[#F7F4EE] transition-colors"
+        >
           ‹
         </button>
       </div>
 
-      {/* اسلایدر ماه‌ها */}
-      <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {/* ماه‌ها — فروردین سمت راست، اسفند سمت چپ */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ direction: "rtl" }}>
         {MONTHS.map((label, i) => {
           const m        = i + 1;
           const isActive = mode === "pick" && jm === m;
