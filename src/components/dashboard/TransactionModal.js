@@ -10,8 +10,7 @@ import { useCurrency } from "@/context/currencyContext";
 const TYPE_VARIANTS = [
   { key: "INCOME",      label: "درآمد" },
   { key: "EXPENSE",     label: "خرج"   },
-  { key: "INSTALLMENT", label: "قسط"   },
-  { key: "LOAN",        label: "وام"   },
+  { key: "INSTALLMENT", label: "قسط شخصی"   },
 ];
 
 const formatAmount = (value) => {
