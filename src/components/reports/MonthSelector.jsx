@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import api from "@/lib/axios";
 
-// ---------- تبدیل تقویم شمسی <-> میلادی ----------
 function toJalali(gy, gm, gd) {
   const JY = gy - 1600, JM = gm - 1, JD = gd - 1;
   let g = 365 * JY + Math.floor((JY + 3) / 4) - Math.floor((JY + 99) / 100) + Math.floor((JY + 399) / 400);
@@ -96,16 +95,13 @@ export default function MonthSelector({ display, unit, onPeriodChange }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, jy, jm]);
 
-  const selectAll   = () => setMode("all");
-  const selectMonth = (m) => { setJm(m); setMode("pick"); };
-
   return (
-    <div className="bg-white rounded-2xl border border-[#EDE8DC] p-5 mb-6">
+    <div dir="rtl" className="bg-white rounded-2xl border border-[#EDE8DC] p-5 mb-6">
 
       {/* دکمه همه */}
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-start mb-3">
         <button
-          onClick={selectAll}
+          onClick={() => setMode("all")}
           className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${
             mode === "all"
               ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
@@ -116,36 +112,36 @@ export default function MonthSelector({ display, unit, onPeriodChange }) {
         </button>
       </div>
 
-      {/* انتخاب سال — راست: سال بعد، چپ: سال قبل (منطق RTL) */}
-      <div className="flex items-center justify-center gap-4 mb-3">
-        {/* سال بعد — سمت راست */}
+      {/* انتخاب سال
+          در RTL: ChevronRight = رفتن به سال بعد (سمت راست = جلو)
+                  ChevronLeft  = رفتن به سال قبل (سمت چپ  = عقب) */}
+      <div className="flex items-center justify-center gap-2 mb-3">
         <button
           onClick={() => setJy((y) => y + 1)}
-          className="text-2xl font-bold text-[#0F6F5C] w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[#F7F4EE] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[#0F6F5C] hover:bg-[#F7F4EE] transition-colors"
         >
-          ›
+          <ChevronRight size={20} strokeWidth={2.5} />
         </button>
 
         <span className="text-base font-extrabold text-[#26241F] w-16 text-center">{jy}</span>
 
-        {/* سال قبل — سمت چپ */}
         <button
           onClick={() => setJy((y) => y - 1)}
-          className="text-2xl font-bold text-[#0F6F5C] w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[#F7F4EE] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[#0F6F5C] hover:bg-[#F7F4EE] transition-colors"
         >
-          ‹
+          <ChevronLeft size={20} strokeWidth={2.5} />
         </button>
       </div>
 
       {/* ماه‌ها — فروردین سمت راست، اسفند سمت چپ */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ direction: "rtl" }}>
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {MONTHS.map((label, i) => {
           const m        = i + 1;
           const isActive = mode === "pick" && jm === m;
           return (
             <button
               key={m}
-              onClick={() => selectMonth(m)}
+              onClick={() => { setJm(m); setMode("pick"); }}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-colors ${
                 isActive
                   ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
@@ -168,7 +164,7 @@ export default function MonthSelector({ display, unit, onPeriodChange }) {
           <p className="text-sm font-bold text-[#26241F] text-center mt-4 mb-3">
             {mode === "all" ? "همه‌ی زمان‌ها" : `${MONTHS[jm - 1]} ${jy}`}
           </p>
-          <div className="flex flex-row-reverse gap-2">
+          <div className="flex gap-2">
             <div className="flex-1 bg-[#E6F4EA] rounded-2xl py-3 flex flex-col items-center">
               <span className="text-[11px] text-[#555] mb-1">درآمد</span>
               <span className="text-xs font-extrabold text-[#059669]">
