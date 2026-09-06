@@ -8,6 +8,7 @@ export default function QuickNav() {
   const items = [
     { label: "گزارش‌های مالی", icon: BarChart2, path: "/reports" },
     { label: "اهداف مالی", icon: Target, path: "/goals" },
+    { label: "تراکنش ها", icon: Target, path: "/transactions" },
   ];
 
   return (
