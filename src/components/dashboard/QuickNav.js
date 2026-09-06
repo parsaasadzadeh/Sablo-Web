@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BarChart2, Target } from "lucide-react";
+import { BarChart2, Target , ArrowLeftRight} from "lucide-react";
 
 export default function QuickNav() {
   const router = useRouter();
@@ -8,7 +8,7 @@ export default function QuickNav() {
   const items = [
     { label: "گزارش‌های مالی", icon: BarChart2, path: "/reports" },
     { label: "اهداف مالی", icon: Target, path: "/goals" },
-    { label: "تراکنش ها", icon: Target, path: "/transactions" },
+    { label: "تراکنش ها", icon: ArrowLeftRight, path: "/transactions" },
   ];
 
   return (
