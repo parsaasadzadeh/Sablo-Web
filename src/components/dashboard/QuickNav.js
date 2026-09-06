@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { BarChart2, Target , ArrowLeftRight} from "lucide-react";
+import { BarChart2, Target , ArrowLeftRigh,Landmark} from "lucide-react";
 
 export default function QuickNav() {
   const router = useRouter();
