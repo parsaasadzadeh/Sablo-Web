@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CurrencyProvider } from "@/context/currencyContext";
 import api from "@/lib/axios";
-import LoansContent from "@/components/loans/LoansContent";
+import LoansContent from "../../../components/loans/LoansContent";
 
 export default function LoansPage() {
   const router = useRouter();
