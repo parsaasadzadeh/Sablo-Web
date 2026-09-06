@@ -3,14 +3,17 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, X, Calendar, Download, CheckCircle,
-  Clock, Eye, Pencil, Trash2, ChevronRight, ChevronLeft, ArrowRight, Loader2
+  Eye, Pencil, Trash2, ChevronRight, ChevronLeft, ArrowRight, Loader2
 } from "lucide-react";
+import DatePicker from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 import api from "@/lib/axios";
 import { useCurrency } from "@/context/currencyContext";
 import TransactionModal from "@/components/dashboard/TransactionModal";
 import TransactionDetailModal from "@/components/dashboard/TransactionDetailModal";
 
-// ── ثابت‌ها ──────────────────────────────────────────────────────────────────
+// ── ثابت‌ها ───────────────────────────────────────────────────────────────────
 
 const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام" };
 
@@ -21,20 +24,17 @@ const TYPE_COLORS = {
   LOAN:        "bg-blue-50    text-blue-700    border-blue-100",
 };
 
-// ── کمک‌توابع ─────────────────────────────────────────────────────────────────
+// ── کمک‌توابع ──────────────────────────────────────────────────────────────────
 
 function formatJalali(iso) {
   if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleDateString("fa-IR");
-  } catch {
-    return "";
-  }
+  try { return new Date(iso).toLocaleDateString("fa-IR"); } catch { return ""; }
 }
 
-function isoToDate(iso) {
-  if (!iso) return "";
-  return iso.split("T")[0];
+// تبدیل Date object یا ISO string به YYYY-MM-DD برای API
+function toISODate(val) {
+  if (!val) return "";
+  try { return new Date(val).toISOString().split("T")[0]; } catch { return ""; }
 }
 
 // ── Pagination ────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ function buildPageList(current, total) {
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
-  const pages  = buildPageList(currentPage, totalPages);
+  const pages   = buildPageList(currentPage, totalPages);
   const isFirst = currentPage <= 1;
   const isLast  = currentPage >= totalPages;
   const goTo = (p) => { if (p >= 1 && p <= totalPages && p !== currentPage) onPageChange(p); };
@@ -108,14 +108,11 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
 
   return (
     <div className="py-3.5 border-b border-[#EDE8DC] last:border-0">
-      {/* ردیف بالا */}
       <div className="flex flex-row-reverse items-start gap-3">
-        {/* بج نوع */}
         <div className={`shrink-0 w-12 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold border ${TYPE_COLORS[tx.type]}`}>
           {TYPE_LABELS[tx.type]}
         </div>
 
-        {/* اطلاعات */}
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-semibold text-[#26241F] truncate">{tx.title}</p>
           {tx.description && (
@@ -134,7 +131,6 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
           )}
         </div>
 
-        {/* مبلغ */}
         <div className="shrink-0 text-left">
           <p className={`text-base font-extrabold ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
             {isPositive ? "+" : "-"}{display(tx.amount)}
@@ -144,7 +140,6 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
         </div>
       </div>
 
-      {/* ردیف اکشن‌ها */}
       <div className="flex flex-row-reverse items-center justify-between mt-2.5">
         <div>
           {tx.type === "INSTALLMENT" && !tx.isPaid && (
@@ -182,37 +177,38 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
 
 export default function TransactionsContent() {
   const router = useRouter();
-  const { display, unit, currency } = useCurrency();
+  const { display, unit } = useCurrency();
 
-  const [transactions,  setTransactions]  = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [downloading,   setDownloading]   = useState(false);
-  const [currentPage,   setCurrentPage]   = useState(1);
-  const [totalPages,    setTotalPages]    = useState(1);
-  const [totalItems,    setTotalItems]    = useState(0);
-  const [searchQuery,   setSearchQuery]   = useState("");
-  const [fromDate,      setFromDate]      = useState("");
-  const [toDate,        setToDate]        = useState("");
-  const [showDateFilter,setShowDateFilter]= useState(false);
+  const [transactions,        setTransactions]        = useState([]);
+  const [loading,             setLoading]             = useState(true);
+  const [downloading,         setDownloading]         = useState(false);
+  const [currentPage,         setCurrentPage]         = useState(1);
+  const [totalPages,          setTotalPages]          = useState(1);
+  const [totalItems,          setTotalItems]          = useState(0);
+  const [searchQuery,         setSearchQuery]         = useState("");
 
-  const [selectedTx,    setSelectedTx]    = useState(null);
-  const [editingTx,     setEditingTx]     = useState(null);
-  const [isModalOpen,   setIsModalOpen]   = useState(false);
+  // تاریخ‌ها به صورت Date object ذخیره میشن — برای DatePicker
+  const [fromDate,            setFromDate]            = useState(null);
+  const [toDate,              setToDate]              = useState(null);
+  const [showDateFilter,      setShowDateFilter]      = useState(false);
 
-  const [categories,         setCategories]         = useState([]);
-  const [categoryFormLoading,setCategoryFormLoading] = useState(false);
+  const [selectedTx,          setSelectedTx]          = useState(null);
+  const [editingTx,           setEditingTx]           = useState(null);
+  const [isModalOpen,         setIsModalOpen]         = useState(false);
+  const [categories,          setCategories]          = useState([]);
+  const [categoryFormLoading, setCategoryFormLoading] = useState(false);
 
   const searchTimeoutRef = useRef(null);
-  const hasDateFilter = Boolean(fromDate || toDate);
+  const hasDateFilter    = Boolean(fromDate || toDate);
 
-  // ── fetch ───────────────────────────────────────────────────────────────────
+  // ── fetch ────────────────────────────────────────────────────────────────────
 
-  const fetchTransactions = useCallback(async (page = 1, search = "", from = "", to = "") => {
+  const fetchTransactions = useCallback(async (page = 1, search = "", from = null, to = null) => {
     try {
       const params = { page, limit: 20 };
       if (search) params.search = search;
-      if (from)   params.from   = isoToDate(from);
-      if (to)     params.to     = isoToDate(to);
+      if (from)   params.from   = toISODate(from);
+      if (to)     params.to     = toISODate(to);
       const res = await api.get("/finance/my-data", { params });
       setTransactions(res.data.transactions ?? []);
       setCurrentPage(res.data.currentPage ?? 1);
@@ -233,11 +229,11 @@ export default function TransactionsContent() {
   }, []);
 
   useEffect(() => {
-    fetchTransactions(1, "", "", "");
+    fetchTransactions(1, "", null, null);
     fetchCategories();
   }, []);
 
-  // ── ساخت دسته‌بندی شخصی ─────────────────────────────────────────────────────
+  // ── ساخت دسته‌بندی ────────────────────────────────────────────────────────────
 
   const createCustomCategory = useCallback(async (label, icon) => {
     setCategoryFormLoading(true);
@@ -253,7 +249,7 @@ export default function TransactionsContent() {
     }
   }, []);
 
-  // ── دانلود CSV ──────────────────────────────────────────────────────────────
+  // ── دانلود CSV ───────────────────────────────────────────────────────────────
 
   const handleDownloadCSV = async () => {
     if (downloading) return;
@@ -261,9 +257,8 @@ export default function TransactionsContent() {
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
-      if (fromDate)    params.append("from", isoToDate(fromDate));
-      if (toDate)      params.append("to",   isoToDate(toDate));
-
+      if (fromDate)    params.append("from", toISODate(fromDate));
+      if (toDate)      params.append("to",   toISODate(toDate));
       const res = await api.get(
         `/finance/export-csv${params.toString() ? "?" + params.toString() : ""}`,
         { responseType: "text", transformResponse: [(d) => d] }
@@ -273,17 +268,17 @@ export default function TransactionsContent() {
       const blob = new Blob([bom], { type: "text/csv;charset=utf-8;" });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
-      a.href = url; a.download = `sablo-transactions-${Date.now()}.csv`;
+      a.href = url; a.download = `transactions-${Date.now()}.csv`;
       document.body.appendChild(a); a.click();
       document.body.removeChild(a); URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       alert("خطا در دانلود فایل");
     } finally {
       setDownloading(false);
     }
   };
 
-  // ── سرچ با debounce ─────────────────────────────────────────────────────────
+  // ── سرچ با debounce ──────────────────────────────────────────────────────────
 
   const handleSearch = (text) => {
     setSearchQuery(text);
@@ -301,13 +296,13 @@ export default function TransactionsContent() {
   };
 
   const clearDateFilter = () => {
-    setFromDate(""); setToDate("");
+    setFromDate(null); setToDate(null);
     setCurrentPage(1);
-    fetchTransactions(1, searchQuery, "", "");
+    fetchTransactions(1, searchQuery, null, null);
     setShowDateFilter(false);
   };
 
-  // ── حذف ────────────────────────────────────────────────────────────────────
+  // ── حذف ─────────────────────────────────────────────────────────────────────
 
   const handleDelete = useCallback(async (tx) => {
     const msg = tx.type === "LOAN"
@@ -322,7 +317,7 @@ export default function TransactionsContent() {
     }
   }, [currentPage, searchQuery, fromDate, toDate, fetchTransactions]);
 
-  // ── پرداخت قسط ─────────────────────────────────────────────────────────────
+  // ── پرداخت قسط ──────────────────────────────────────────────────────────────
 
   const handlePayInstallment = useCallback(async (id) => {
     try {
@@ -333,14 +328,7 @@ export default function TransactionsContent() {
     }
   }, [currentPage, searchQuery, fromDate, toDate, fetchTransactions]);
 
-  // ── ویرایش ─────────────────────────────────────────────────────────────────
-
-  const openEditModal = (tx) => {
-    setEditingTx(tx);
-    setIsModalOpen(true);
-  };
-
-  // ── تغییر صفحه ─────────────────────────────────────────────────────────────
+  // ── تغییر صفحه ──────────────────────────────────────────────────────────────
 
   const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
@@ -348,18 +336,22 @@ export default function TransactionsContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [searchQuery, fromDate, toDate, fetchTransactions]);
 
-  // ── رندر ────────────────────────────────────────────────────────────────────
+  // ── رندر ─────────────────────────────────────────────────────────────────────
 
   return (
     <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] font-sans">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap'); .font-sans { font-family: 'Vazirmatn', sans-serif; }`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        .font-sans { font-family: 'Vazirmatn', sans-serif; }
+        .rmdp-input { width: 100% !important; height: 40px !important; border-radius: 0.75rem !important; background-color: #F7F4EE !important; border-color: #EDE8DC !important; font-size: 0.8125rem !important; padding: 0.5rem 0.875rem !important; outline: none !important; text-align: right; font-family: 'Vazirmatn', sans-serif; }
+        .rmdp-input:focus { border-color: #0F6F5C !important; }
+      `}</style>
 
       <div className="max-w-2xl mx-auto p-4 sm:p-6">
 
         {/* هدر */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            {/* دانلود */}
             <button
               onClick={handleDownloadCSV}
               disabled={downloading}
@@ -368,11 +360,9 @@ export default function TransactionsContent() {
             >
               {downloading
                 ? <Loader2 size={15} className="animate-spin text-[#0F6F5C]" />
-                : <Download size={15} className="text-[#0F6F5C]" />
-              }
+                : <Download size={15} className="text-[#0F6F5C]" />}
             </button>
 
-            {/* افزودن جدید */}
             <button
               onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
               className="bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
@@ -387,13 +377,12 @@ export default function TransactionsContent() {
               onClick={() => router.push("/dashboard")}
               className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
             >
-              <ArrowRight size={15} />
-              بازگشت
+              <ArrowRight size={15} /> بازگشت
             </button>
           </div>
         </div>
 
-        {/* سرچ و فیلتر */}
+        {/* سرچ و دکمه فیلتر */}
         <div className="flex flex-row-reverse gap-2 mb-3">
           <div className="flex-1 flex flex-row-reverse items-center gap-2 bg-white border border-[#EDE8DC] rounded-xl px-3 py-2.5">
             <Search size={14} className="text-[#8A8273] shrink-0" />
@@ -423,29 +412,52 @@ export default function TransactionsContent() {
           </button>
         </div>
 
-        {/* پانل فیلتر تاریخ */}
+        {/* پانل فیلتر تاریخ شمسی */}
         {showDateFilter && (
-          <div className="bg-white border border-[#EDE8DC] rounded-2xl p-4 mb-4">
-            <div className="flex flex-row-reverse gap-3 mb-3">
+          <div className="bg-white border border-[#EDE8DC] rounded-2xl p-4 mb-4 space-y-3">
+            <p className="text-xs font-bold text-[#26241F] text-right">فیلتر بازه زمانی</p>
+
+            <div className="flex flex-row-reverse gap-3">
+              {/* از تاریخ */}
               <div className="flex-1">
-                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">از تاریخ</label>
-                <input
-                  type="date"
-                  value={fromDate ? isoToDate(fromDate) : ""}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full text-sm bg-[#F7F4EE] border border-[#EDE8DC] rounded-xl px-3 py-2 outline-none focus:border-[#0F6F5C] text-right"
+                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">
+                  از تاریخ
+                </label>
+                <DatePicker
+                  calendar={persian}
+                  locale={persian_fa}
+                  value={fromDate}
+                  onChange={(d) => setFromDate(d?.isValid ? d.toDate() : null)}
+                  calendarPosition="bottom-right"
+                  placeholder="انتخاب تاریخ"
+                  maxDate={toDate || undefined}
                 />
               </div>
+
+              {/* تا تاریخ */}
               <div className="flex-1">
-                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">تا تاریخ</label>
-                <input
-                  type="date"
-                  value={toDate ? isoToDate(toDate) : ""}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full text-sm bg-[#F7F4EE] border border-[#EDE8DC] rounded-xl px-3 py-2 outline-none focus:border-[#0F6F5C] text-right"
+                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">
+                  تا تاریخ
+                </label>
+                <DatePicker
+                  calendar={persian}
+                  locale={persian_fa}
+                  value={toDate}
+                  onChange={(d) => setToDate(d?.isValid ? d.toDate() : null)}
+                  calendarPosition="bottom-left"
+                  placeholder="انتخاب تاریخ"
+                  minDate={fromDate || undefined}
                 />
               </div>
             </div>
+
+            {/* نمایش بازه انتخاب‌شده */}
+            {hasDateFilter && (
+              <p className="text-[11px] text-[#0F6F5C] text-right font-medium">
+                {fromDate ? formatJalali(fromDate) : "..."} تا {toDate ? formatJalali(toDate) : "..."}
+              </p>
+            )}
+
             <div className="flex flex-row-reverse gap-2">
               <button
                 onClick={applyDateFilter}
@@ -467,8 +479,6 @@ export default function TransactionsContent() {
 
         {/* کارت لیست */}
         <div className="bg-white rounded-2xl border border-[#EDE8DC] shadow-sm">
-
-          {/* سر کارت */}
           {!loading && totalItems > 0 && (
             <div className="px-4 py-3 border-b border-[#EDE8DC] flex flex-row-reverse items-center justify-between">
               <span className="text-xs text-[#8A8273]">{totalItems} تراکنش</span>
@@ -506,7 +516,7 @@ export default function TransactionsContent() {
                   tx={tx}
                   onPay={handlePayInstallment}
                   onView={setSelectedTx}
-                  onEdit={openEditModal}
+                  onEdit={(tx) => { setEditingTx(tx); setIsModalOpen(true); }}
                   onDelete={handleDelete}
                   display={display}
                   unit={unit}
@@ -515,7 +525,6 @@ export default function TransactionsContent() {
             )}
           </div>
 
-          {/* صفحه‌بندی */}
           {!loading && totalPages > 1 && (
             <div className="px-4 pb-4">
               <Pagination
@@ -532,7 +541,7 @@ export default function TransactionsContent() {
       <TransactionDetailModal
         transaction={selectedTx}
         onClose={() => setSelectedTx(null)}
-        onEdit={(tx) => { setSelectedTx(null); openEditModal(tx); }}
+        onEdit={(tx) => { setSelectedTx(null); setEditingTx(tx); setIsModalOpen(true); }}
         onDelete={(tx) => { setSelectedTx(null); handleDelete(tx); }}
         onPayInstallment={(id) => { handlePayInstallment(id); setSelectedTx(null); }}
       />
