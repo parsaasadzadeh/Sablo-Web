@@ -5,7 +5,7 @@ import { CurrencyProvider } from "@/context/currencyContext";
 import api from "@/lib/axios";
 
 // کامپوننت داخلی که از context استفاده میکنه
-import GoalsContent from "@/components/goals/GoalsContent";
+import GoalsContent from "../../../components/goals/GoalsContent";
 
 export default function GoalsPage() {
   const router = useRouter();
