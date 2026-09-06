@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Plus, Loader2, Landmark } from "lucide-react";
 import api from "@/lib/axios";
 import { useCurrency } from "@/context/currencyContext";
-import LoanCard from "@/components/loans/LoanCard";
-import CreateLoanModal from "@/components/loans/CreateLoanModal";
+import LoanCard from "./LoanCard";
+import CreateLoanModal from "./CreateLoanModal";
 
 export default function LoansContent() {
   const router  = useRouter();
