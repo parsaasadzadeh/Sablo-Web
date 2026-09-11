@@ -350,38 +350,40 @@ export default function TransactionsContent() {
       <div className="max-w-2xl mx-auto p-4 sm:p-6">
 
         {/* هدر */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleDownloadCSV}
-              disabled={downloading}
-              className="w-9 h-9 rounded-xl border border-[#0F6F5C] bg-[#E6F4F1] flex items-center justify-center hover:bg-[#CCE9E3] transition-colors disabled:opacity-50"
-              title="دانلود CSV"
-            >
-              {downloading
-                ? <Loader2 size={15} className="animate-spin text-[#0F6F5C]" />
-                : <Download size={15} className="text-[#0F6F5C]" />}
-            </button>
+        {/* هدر */}
+<div className="flex items-center mb-5">
+  {/* بازگشت — سمت راست در RTL */}
+  <button
+    onClick={() => router.push("/dashboard")}
+    className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
+  >
+    <ArrowRight size={15} /> بازگشت
+  </button>
 
-            <button
-              onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
-              className="bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
-            >
-              + جدید
-            </button>
-          </div>
+  {/* عنوان — وسط */}
+  <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">تراکنش‌ها</h1>
 
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-[#26241F]">تراکنش‌ها</h1>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
-            >
-              <ArrowRight size={15} /> بازگشت
-            </button>
-          </div>
-        </div>
+  {/* دکمه‌های اکشن — سمت چپ در RTL */}
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
+      className="bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
+    >
+      + جدید
+    </button>
 
+    <button
+      onClick={handleDownloadCSV}
+      disabled={downloading}
+      className="w-9 h-9 rounded-xl border border-[#0F6F5C] bg-[#E6F4F1] flex items-center justify-center hover:bg-[#CCE9E3] transition-colors disabled:opacity-50"
+      title="دانلود CSV"
+    >
+      {downloading
+        ? <Loader2 size={15} className="animate-spin text-[#0F6F5C]" />
+        : <Download size={15} className="text-[#0F6F5C]" />}
+    </button>
+  </div>
+</div>
         {/* سرچ و دکمه فیلتر */}
         <div className="flex flex-row-reverse gap-2 mb-3">
           <div className="flex-1 flex flex-row-reverse items-center gap-2 bg-white border border-[#EDE8DC] rounded-xl px-3 py-2.5">
