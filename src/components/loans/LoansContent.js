@@ -8,12 +8,12 @@ import LoanCard from "./LoanCard";
 import CreateLoanModal from "./CreateLoanModal";
 
 export default function LoansContent() {
-  const router  = useRouter();
+  const router = useRouter();
   const { display, unit } = useCurrency();
 
-  const [loans,          setLoans]          = useState([]);
-  const [loading,        setLoading]        = useState(true);
-  const [isModalOpen,    setIsModalOpen]    = useState(false);
+  const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchLoans = useCallback(async () => {
     try {
@@ -47,10 +47,9 @@ export default function LoansContent() {
     }
   };
 
-  // خلاصه کلی
-  const totalDebt      = loans.reduce((s, l) => s + l.remainingAmount, 0);
-  const totalPaid      = loans.reduce((s, l) => s + l.paidAmount, 0);
-  const activeLoans    = loans.filter(l => !l.isFullyPaid).length;
+  const totalDebt = loans.reduce((s, l) => s + l.remainingAmount, 0);
+  const totalPaid = loans.reduce((s, l) => s + l.paidAmount, 0);
+  const activeLoans = loans.filter(l => !l.isFullyPaid).length;
 
   return (
     <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] font-sans">
@@ -64,29 +63,35 @@ export default function LoansContent() {
       <div className="max-w-2xl mx-auto p-4 sm:p-6">
 
         {/* هدر */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center mb-5">
+          {/* بازگشت — سمت راست در RTL */}
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
+          >
+            <ArrowRight size={15} />
+            بازگشت
+          </button>
+
+          {/* عنوان — وسط */}
+          <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">
+            وام‌های من
+          </h1>
+
+          {/* وام جدید — سمت چپ در RTL */}
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
           >
-            <Plus size={14} /> وام جدید
+            <Plus size={14} />
+            وام جدید
           </button>
-
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-[#26241F]">وام‌های من</h1>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
-            >
-              <ArrowRight size={15} /> بازگشت
-            </button>
-          </div>
         </div>
 
-        {/* خلاصه کلی — فقط وقتی وام داریم */}
+        {/* خلاصه کلی */}
         {!loading && loans.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#EDE8DC] p-4 mb-5">
-            <div className="flex flex-row-reverse gap-3">
+            <div className="flex gap-3">
               <div className="flex-1 text-center">
                 <p className="text-[11px] text-[#8A8273] mb-1">بدهی باقیمانده</p>
                 <p className="text-sm font-extrabold text-rose-500">
@@ -115,7 +120,6 @@ export default function LoansContent() {
             <Loader2 className="animate-spin text-[#0F6F5C]" size={28} />
           </div>
         ) : loans.length === 0 ? (
-          /* حالت خالی */
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-16 h-16 bg-[#EDE8DC] rounded-full flex items-center justify-center">
               <Landmark size={28} className="text-[#8A8273]" />
@@ -134,9 +138,7 @@ export default function LoansContent() {
             </button>
           </div>
         ) : (
-          /* لیست وام‌ها */
           <>
-            {/* وام‌های فعال اول */}
             {loans.filter(l => !l.isFullyPaid).map(loan => (
               <LoanCard
                 key={loan._id}
@@ -148,7 +150,6 @@ export default function LoansContent() {
               />
             ))}
 
-            {/* وام‌های تسویه‌شده */}
             {loans.filter(l => l.isFullyPaid).length > 0 && (
               <>
                 <p className="text-xs font-bold text-[#8A8273] text-right mb-3 mt-2">
