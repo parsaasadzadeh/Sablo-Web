@@ -6,7 +6,8 @@ export default function HeroSection() {
   return (
     <section
       dir="rtl"
-      className="relative overflow-hidden bg-[#F4FAF7] min-h-[calc(100vh-80px)]"
+      className="relative overflow-hidden bg-[#F4FAF7] min-h-[calc(100vh-80px)] w-screen -mx-[50vw] left-1/2 right-1/2 relative"
+      style={{ marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", width: "100vw" }}
     >
       {/* پس‌زمینه دکوراتیو */}
       <div
