@@ -30,7 +30,7 @@ export default function HeroSection() {
         </svg>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-8">
+      <div className="relative w-full px-8 xl:px-20 pt-16 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
 
           {/* ستون متن — راست */}
@@ -135,46 +135,6 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* کارت‌های آماری پایین */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* کارت ۱ */}
-          <div className="bg-white rounded-2xl shadow-sm border border-[#E8F0EC] px-6 py-5 flex items-center gap-4 group hover:shadow-md transition-shadow">
-            <div className="w-11 h-11 rounded-xl bg-[#E8F8EE] flex items-center justify-center shrink-0">
-              <TrendingUp size={20} className="text-[#1B7A5A]" />
-            </div>
-            <div className="flex-1 text-right">
-              <p className="text-2xl font-extrabold text-[#1B7A5A]">+۴۰٪</p>
-              <p className="text-sm font-semibold text-[#1B2E26] mt-0.5">رشد مالی کاربران</p>
-              <p className="text-xs text-[#8A9E94] mt-0.5">بهره‌وری بیشتر در مدیریت هزینه‌ها</p>
-            </div>
-            <ArrowLeft size={16} className="text-[#1B7A5A] shrink-0" />
-          </div>
-
-          {/* کارت ۲ */}
-          <div className="bg-white rounded-2xl shadow-sm border border-[#E8F0EC] px-6 py-5 flex items-center gap-4 group hover:shadow-md transition-shadow">
-            <div className="w-11 h-11 rounded-xl bg-[#FEF3C7] flex items-center justify-center shrink-0">
-              <CreditCard size={20} className="text-[#F59E0B]" />
-            </div>
-            <div className="flex-1 text-right">
-              <p className="text-2xl font-extrabold text-[#F59E0B]">تراز منفی</p>
-              <p className="text-xs text-[#8A9E94] mt-1">سرعت در کم شدن بدهی‌ها</p>
-            </div>
-            <ArrowLeft size={16} className="text-[#F59E0B] shrink-0" />
-          </div>
-
-          {/* کارت ۳ */}
-          <div className="bg-white rounded-2xl shadow-sm border border-[#E8F0EC] px-6 py-5 flex items-center gap-4 group hover:shadow-md transition-shadow">
-            <div className="w-11 h-11 rounded-xl bg-[#FEE2E2] flex items-center justify-center shrink-0">
-              <AlertTriangle size={20} className="text-[#EF4444]" />
-            </div>
-            <div className="flex-1 text-right">
-              <p className="text-2xl font-extrabold text-[#EF4444]">۸۷٪</p>
-              <p className="text-sm font-semibold text-[#1B2E26] mt-0.5">تأخیر در پرداخت</p>
-              <p className="text-xs text-[#8A9E94] mt-0.5">هشدار لحظه‌ای برای جلوگیری از جریمه</p>
-            </div>
-            <ArrowLeft size={16} className="text-[#EF4444] shrink-0" />
-          </div>
-        </div>
       </div>
     </section>
   );
