@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { CreditCard, Plus, Trash2, CheckCircle2, X, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CreditCard, Plus, Trash2, CheckCircle2, X } from 'lucide-react';
+import api from '@/lib/axios';
 
-// ─── رنگ‌ها ───────────────────────────────────────────────────────────────────
 const C = {
   brand: '#0F6F5C',
   brandLight: '#E8F5F1',
@@ -13,7 +14,6 @@ const C = {
   muted: '#8A8273',
   border: '#EDE8DC',
   danger: '#DC2626',
-  dangerLight: '#FEF2F2',
 };
 
 const CARD_COLORS = [
@@ -22,22 +22,6 @@ const CARD_COLORS = [
 ];
 
 const CARD_ICONS = ['💳', '🏦', '💰', '🏧', '💵', '🪙', '💎', '🎯'];
-
-// ─── شبیه‌سازی API ─────────────────────────────────────────────────────────────
-const mockApi = {
-  getCards: () => new Promise((res) =>
-    setTimeout(() => res([
-      { _id: '1', name: 'بانک ملت', icon: '🏦', color: '#0F6F5C', description: 'حساب جاری' },
-      { _id: '2', name: 'پاسارگاد', icon: '💳', color: '#1E40AF', description: 'حساب پس‌انداز' },
-    ]), 800)
-  ),
-  createCard: (data) => new Promise((res) =>
-    setTimeout(() => res({ ...data, _id: Date.now().toString() }), 600)
-  ),
-  deleteCard: (id, deleteTransactions) => new Promise((res) =>
-    setTimeout(() => res({ id, deleteTransactions }), 500)
-  ),
-};
 
 // ─── Dialog تأیید ─────────────────────────────────────────────────────────────
 function ConfirmDialog({ open, title, message, confirmText, cancelText, variant = 'danger', onConfirm, onCancel }) {
@@ -87,6 +71,7 @@ function Toast({ message, variant, visible }) {
 
 // ─── کامپوننت اصلی ─────────────────────────────────────────────────────────────
 export default function CardsPage() {
+  const router = useRouter();
   const [cards, setCards] = useState([]);
   const [activeCard, setActiveCard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -118,22 +103,29 @@ export default function CardsPage() {
         cancelText: options.cancelText,
         variant: options.variant || 'danger',
         onConfirm: () => { setDialog({ open: false }); resolve(true); },
-        onCancel: () => { setDialog({ open: false }); resolve(false); },
+        onCancel:  () => { setDialog({ open: false }); resolve(false); },
       });
     });
 
   // ─── دریافت کارت‌ها ─────────────────────────────────────────────────────────
   const fetchCards = useCallback(async () => {
     try {
-      // جایگزین با: const res = await api.get('/cards', { headers: { Authorization: `Bearer ${token}` } });
-      const data = await mockApi.getCards();
-      setCards(data);
-    } catch {
-      showToast('خطا در دریافت کارت‌ها', 'danger');
+      const token = localStorage.getItem('token');
+      if (!token) { router.push('/'); return; }
+
+      const res = await api.get('/cards');
+      setCards(res.data.cards ?? res.data ?? []);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        router.push('/');
+      } else {
+        showToast('خطا در دریافت کارت‌ها', 'danger');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => { fetchCards(); }, [fetchCards]);
 
@@ -153,19 +145,19 @@ export default function CardsPage() {
     }
     setFormLoading(true);
     try {
-      // جایگزین با: const res = await api.post('/cards', {...}, { headers: {...} });
-      const newCard = await mockApi.createCard({
+      const res = await api.post('/cards', {
         name: name.trim(),
         icon: selectedIcon,
         color: selectedColor,
         description: description.trim(),
       });
+      const newCard = res.data.card ?? res.data;
       setCards((prev) => [...prev, newCard]);
       setIsCreateOpen(false);
       resetForm();
       showToast('کارت با موفقیت ساخته شد');
-    } catch {
-      showToast('خطا در ساخت کارت', 'danger');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'خطا در ساخت کارت', 'danger');
     } finally {
       setFormLoading(false);
     }
@@ -187,8 +179,7 @@ export default function CardsPage() {
     );
 
     try {
-      // جایگزین با: await api.delete(`/cards/${card._id}?deleteTransactions=${alsoDeleteTx}`, ...);
-      await mockApi.deleteCard(card._id, alsoDeleteTx);
+      await api.delete(`/cards/${card._id}?deleteTransactions=${alsoDeleteTx}`);
       setCards((prev) => prev.filter((c) => c._id !== card._id));
       if (activeCard?._id === card._id) setActiveCard(null);
       showToast(
@@ -199,11 +190,27 @@ export default function CardsPage() {
     }
   }, [cards, activeCard]);
 
-  // ─── رندر ───────────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: C.bg, fontFamily: 'inherit' }} dir="rtl">
+  // ─── لودینگ اولیه ──────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: C.bg }}>
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-4"
+          style={{ borderColor: `${C.brand}30`, borderTopColor: C.brand }}
+        />
+      </div>
+    );
+  }
 
-      {/* ── هدر صفحه ── */}
+  // ─── رندر اصلی ─────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: C.bg }} dir="rtl" lang="fa">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+        [dir="rtl"] { font-family: 'Vazirmatn', sans-serif; }
+      `}</style>
+
+      {/* ── هدر ── */}
       <div className="px-4 pb-2 pt-8 sm:px-8">
         <h1 className="text-2xl font-bold" style={{ color: C.text }}>کارت‌های من</h1>
         <p className="mt-1 text-sm" style={{ color: C.muted }}>
@@ -234,19 +241,8 @@ export default function CardsPage() {
           </button>
         )}
 
-        {/* ── حالت لودینگ ── */}
-        {loading && (
-          <div className="flex flex-col items-center py-16 gap-3">
-            <div
-              className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"
-              style={{ borderColor: `${C.brand}40`, borderTopColor: C.brand }}
-            />
-            <p className="text-sm" style={{ color: C.muted }}>در حال بارگذاری...</p>
-          </div>
-        )}
-
         {/* ── حالت خالی ── */}
-        {!loading && cards.length === 0 && (
+        {cards.length === 0 && (
           <div className="flex flex-col items-center py-20 gap-4">
             <div className="rounded-2xl p-5" style={{ backgroundColor: C.brandLight }}>
               <CreditCard size={40} color={C.brand} />
@@ -259,7 +255,7 @@ export default function CardsPage() {
         )}
 
         {/* ── لیست کارت‌ها ── */}
-        {!loading && cards.map((card) => {
+        {cards.map((card) => {
           const isActive = activeCard?._id === card._id;
           return (
             <button
@@ -271,11 +267,8 @@ export default function CardsPage() {
                 boxShadow: isActive ? `0 0 0 3px ${C.brand}22` : '0 1px 4px rgba(0,0,0,0.06)',
               }}
             >
-              {/* نوار رنگی */}
               <div className="w-1.5 self-stretch" style={{ backgroundColor: card.color }} />
-
               <div className="flex flex-1 items-center justify-between p-4">
-                {/* آیکون + اطلاعات */}
                 <div className="flex items-center gap-3">
                   <div
                     className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl"
@@ -290,8 +283,6 @@ export default function CardsPage() {
                     )}
                   </div>
                 </div>
-
-                {/* تیک + حذف */}
                 <div className="flex items-center gap-3">
                   {isActive && <CheckCircle2 size={20} color={C.brand} />}
                   <button
@@ -308,7 +299,7 @@ export default function CardsPage() {
         })}
 
         {/* ── دکمه افزودن ── */}
-        {!loading && cards.length < 5 && (
+        {cards.length < 5 && (
           <button
             onClick={() => setIsCreateOpen(true)}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-4 text-sm font-semibold transition-colors hover:bg-white"
@@ -319,7 +310,7 @@ export default function CardsPage() {
           </button>
         )}
 
-        {!loading && cards.length >= 5 && (
+        {cards.length >= 5 && (
           <p className="mt-3 text-center text-sm" style={{ color: C.muted }}>
             به حداکثر ۵ کارت رسیدی
           </p>
@@ -365,13 +356,8 @@ export default function CardsPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={40}
-              className="mb-3 w-full rounded-xl px-4 py-3 text-right text-sm outline-none focus:ring-2"
-              style={{
-                backgroundColor: C.bg,
-                border: `1px solid ${C.border}`,
-                color: C.text,
-                focusRingColor: C.brand,
-              }}
+              className="mb-3 w-full rounded-xl px-4 py-3 text-right text-sm outline-none"
+              style={{ backgroundColor: C.bg, border: `1px solid ${C.border}`, color: C.text }}
             />
 
             {/* توضیح */}
@@ -381,17 +367,13 @@ export default function CardsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={100}
-              className="mb-4 w-full rounded-xl px-4 py-3 text-right text-sm outline-none focus:ring-2"
-              style={{
-                backgroundColor: C.bg,
-                border: `1px solid ${C.border}`,
-                color: C.text,
-              }}
+              className="mb-4 w-full rounded-xl px-4 py-3 text-right text-sm outline-none"
+              style={{ backgroundColor: C.bg, border: `1px solid ${C.border}`, color: C.text }}
             />
 
             {/* آیکون */}
             <p className="mb-2 text-right text-xs" style={{ color: C.muted }}>آیکون</p>
-            <div className="mb-4 flex flex-wrap gap-2 justify-start">
+            <div className="mb-4 flex flex-wrap gap-2">
               {CARD_ICONS.map((icon) => (
                 <button
                   key={icon}
@@ -409,7 +391,7 @@ export default function CardsPage() {
 
             {/* رنگ */}
             <p className="mb-2 text-right text-xs" style={{ color: C.muted }}>رنگ</p>
-            <div className="mb-6 flex flex-wrap gap-2.5 justify-start">
+            <div className="mb-6 flex flex-wrap gap-2.5">
               {CARD_COLORS.map((color) => (
                 <button
                   key={color}
@@ -452,10 +434,7 @@ export default function CardsPage() {
         </div>
       )}
 
-      {/* ── Dialog تأیید ── */}
       <ConfirmDialog {...dialog} />
-
-      {/* ── Toast ── */}
       <Toast message={toast.message} variant={toast.variant} visible={toast.visible} />
     </div>
   );
