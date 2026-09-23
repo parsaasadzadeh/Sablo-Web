@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Plus, Trash2, CheckCircle2, X } from 'lucide-react';
 import api from '@/lib/axios';
+import { useCard } from "@/context/cardContext";
 
 const C = {
   brand: '#0F6F5C',
@@ -73,7 +74,7 @@ function Toast({ message, variant, visible }) {
 export default function CardsPage() {
   const router = useRouter();
   const [cards, setCards] = useState([]);
-  const [activeCard, setActiveCard] = useState(null);
+  const { activeCard, setActiveCard } = useCard();
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
