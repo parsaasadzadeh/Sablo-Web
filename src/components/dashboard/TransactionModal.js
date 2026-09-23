@@ -10,7 +10,7 @@ import { useCurrency } from "@/context/currencyContext";
 const TYPE_VARIANTS = [
   { key: "INCOME",      label: "درآمد" },
   { key: "EXPENSE",     label: "خرج"   },
-  { key: "INSTALLMENT", label: "قسط شخصی"   },
+  { key: "INSTALLMENT", label: "قسط شخصی" },
 ];
 
 const formatAmount = (value) => {
@@ -47,6 +47,10 @@ export default function TransactionModal({
   const [category,        setCategory]        = useState(null);
   const [formLoading,     setFormLoading]     = useState(false);
 
+  // ── کارت‌ها ──────────────────────────────────────────────────────────────────
+  const [cards,          setCards]          = useState([]);
+  const [selectedCardId, setSelectedCardId] = useState(null);
+
   const [showNewCat,  setShowNewCat]  = useState(false);
   const [newCatLabel, setNewCatLabel] = useState("");
   const [newCatIcon,  setNewCatIcon]  = useState("");
@@ -69,6 +73,15 @@ export default function TransactionModal({
     }
   };
 
+  // ── دریافت کارت‌ها هنگام باز شدن مودال ────────────────────────────────────
+  useEffect(() => {
+    if (!isOpen) return;
+    api.get("/cards")
+      .then((res) => setCards(res.data.cards ?? res.data ?? []))
+      .catch(() => setCards([]));
+  }, [isOpen]);
+
+  // ── ریست / پر کردن فرم ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!isOpen) return;
     if (editingTransaction) {
@@ -81,11 +94,12 @@ export default function TransactionModal({
       setDescription(editingTransaction.description ?? "");
       setDueDate(editingTransaction.dueDate ? new Date(editingTransaction.dueDate) : "");
       setTransactionDate("");
-      // ← اینجا categoryId → category
       setCategory(editingTransaction.category ?? null);
+      setSelectedCardId(editingTransaction.cardId ?? null);
     } else {
       setType("EXPENSE"); setAmount(""); setTitle("");
-      setDescription(""); setDueDate(""); setTransactionDate(""); setCategory(null);
+      setDescription(""); setDueDate(""); setTransactionDate("");
+      setCategory(null); setSelectedCardId(null);
     }
     setShowNewCat(false);
   }, [isOpen, editingTransaction]);
@@ -107,22 +121,22 @@ export default function TransactionModal({
       const formattedDueDate         = dueDate         ? new Date(dueDate).toISOString()         : undefined;
       const formattedTransactionDate = transactionDate ? new Date(transactionDate).toISOString() : undefined;
 
+      const payload = {
+        amount: amountInRial,
+        title,
+        description,
+        category: type === "EXPENSE" ? category : undefined,
+        dueDate: type === "INSTALLMENT" ? formattedDueDate : undefined,
+        // کارت — فقط اگه انتخاب شده باشه
+        ...(selectedCardId && { cardId: selectedCardId }),
+      };
+
       if (isEditMode) {
-        await api.put(`/finance/update/${editingTransaction._id}`, {
-          amount: amountInRial,
-          title,
-          description,
-          category: type === "EXPENSE" ? category : undefined, // ← categoryId → category
-          dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
-        });
+        await api.put(`/finance/update/${editingTransaction._id}`, payload);
       } else {
         await api.post("/finance/add", {
           type,
-          amount: amountInRial,
-          title,
-          description,
-          category: type === "EXPENSE" ? category : undefined, // ← categoryId → category
-          dueDate: (type === "LOAN" || type === "INSTALLMENT") ? formattedDueDate : undefined,
+          ...payload,
           ...(formattedTransactionDate && { date: formattedTransactionDate }),
         });
       }
@@ -156,7 +170,7 @@ export default function TransactionModal({
           {/* نوع تراکنش */}
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">نوع تراکنش</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {TYPE_VARIANTS.map((item) => (
                 <button
                   key={item.key}
@@ -252,7 +266,6 @@ export default function TransactionModal({
               <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
                 دسته‌بندی (اختیاری)
               </label>
-
               <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {onCreateCategory && (
                   <button
@@ -268,7 +281,6 @@ export default function TransactionModal({
                     <span>دسته‌بندی جدید</span>
                   </button>
                 )}
-
                 <button
                   type="button"
                   onClick={() => setCategory(null)}
@@ -281,7 +293,6 @@ export default function TransactionModal({
                   <span>🚫</span>
                   <span>بدون دسته</span>
                 </button>
-
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
@@ -320,11 +331,9 @@ export default function TransactionModal({
                       className="flex-1 text-sm text-right bg-white border border-[#E5E1D6] rounded-xl px-3 py-2.5 outline-none focus:border-[#0F6F5C]"
                     />
                   </div>
-
                   {newCatError && (
                     <p className="text-[11px] text-red-500 text-right">{newCatError}</p>
                   )}
-
                   <div className="flex flex-row-reverse gap-2">
                     <button
                       type="button"
@@ -347,8 +356,53 @@ export default function TransactionModal({
             </div>
           )}
 
+          {/* ── انتخاب کارت — فقط اگه کارتی وجود داشته باشه ── */}
+          {cards.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
+                کارت (اختیاری)
+              </label>
+              <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {/* بدون کارت */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedCardId(null)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full border text-[11px] font-semibold transition-colors ${
+                    selectedCardId === null
+                      ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
+                      : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
+                  }`}
+                >
+                  <span>🚫</span>
+                  <span>بدون کارت</span>
+                </button>
+
+                {/* کارت‌ها */}
+                {cards.map((card) => {
+                  const isSelected = selectedCardId === card._id;
+                  return (
+                    <button
+                      key={card._id}
+                      type="button"
+                      onClick={() => setSelectedCardId(card._id)}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full border text-[11px] font-semibold transition-all"
+                      style={{
+                        backgroundColor: isSelected ? card.color : "#FCFBF8",
+                        borderColor:     isSelected ? card.color : "#E5E1D6",
+                        color:           isSelected ? "#fff"     : "#8A8273",
+                      }}
+                    >
+                      <span>{card.icon}</span>
+                      <span>{card.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* تاریخ سررسید */}
-          {(type === "LOAN" || type === "INSTALLMENT") && (
+          {type === "INSTALLMENT" && (
             <div>
               <label className="block text-xs font-medium text-amber-800 mb-1.5 text-right">
                 تاریخ سررسید (شمسی)
