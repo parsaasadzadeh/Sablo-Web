@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useCard } from "@/context/cardContext";
+
 import { useRouter } from "next/navigation";
 import {
   Search, X, Calendar, Download, CheckCircle,
@@ -58,7 +60,6 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
   const isFirst = currentPage <= 1;
   const isLast  = currentPage >= totalPages;
   const goTo = (p) => { if (p >= 1 && p <= totalPages && p !== currentPage) onPageChange(p); };
-
   return (
     <div className="flex items-center justify-center gap-1.5 pt-4 border-t border-[#EDE8DC] mt-4">
       <button
@@ -186,6 +187,7 @@ export default function TransactionsContent() {
   const [totalPages,          setTotalPages]          = useState(1);
   const [totalItems,          setTotalItems]          = useState(0);
   const [searchQuery,         setSearchQuery]         = useState("");
+  const { activeCard } = useCard();
 
   // تاریخ‌ها به صورت Date object ذخیره میشن — برای DatePicker
   const [fromDate,            setFromDate]            = useState(null);
@@ -203,24 +205,31 @@ export default function TransactionsContent() {
 
   // ── fetch ────────────────────────────────────────────────────────────────────
 
-  const fetchTransactions = useCallback(async (page = 1, search = "", from = null, to = null) => {
-    try {
-      const params = { page, limit: 20 };
-      if (search) params.search = search;
-      if (from)   params.from   = toISODate(from);
-      if (to)     params.to     = toISODate(to);
-      const res = await api.get("/finance/my-data", { params });
-      setTransactions(res.data.transactions ?? []);
-      setCurrentPage(res.data.currentPage ?? 1);
-      setTotalPages(res.data.totalPages ?? 1);
-      setTotalItems(res.data.totalItems ?? 0);
-    } catch (err) {
-      console.error("Error fetching transactions:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  
+// fetchTransactions رو آپدیت کن:
+const fetchTransactions = useCallback(async (page = 1, search = "", from = null, to = null) => {
+  try {
+    const params = { page, limit: 20 };
+    if (search)      params.search  = search;
+    if (from)        params.from    = toISODate(from);
+    if (to)          params.to      = toISODate(to);
+    if (activeCard)  params.cardId  = activeCard._id; // ← فیلتر کارت
+    const res = await api.get("/finance/my-data", { params });
+    setTransactions(res.data.transactions ?? []);
+    setCurrentPage(res.data.currentPage ?? 1);
+    setTotalPages(res.data.totalPages ?? 1);
+    setTotalItems(res.data.totalItems ?? 0);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [activeCard]); // ← dep
 
+useEffect(() => {
+  setCurrentPage(1);
+  fetchTransactions(1, searchQuery, fromDate, toDate);
+}, [activeCard]);
   const fetchCategories = useCallback(async () => {
     try {
       const res = await api.get("/finance/categories");
