@@ -1,30 +1,22 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Plus, Trash2, CheckCircle2, X } from 'lucide-react';
 import api from '@/lib/axios';
 import { useCard } from "@/context/cardContext";
 
 const C = {
-  brand: '#0F6F5C',
-  brandLight: '#E8F5F1',
-  bg: '#F7F3EB',
-  card: '#FFFFFF',
-  text: '#1A1A1A',
-  muted: '#8A8273',
-  border: '#EDE8DC',
-  danger: '#DC2626',
+  brand: '#0F6F5C', brandLight: '#E8F5F1', bg: '#F7F3EB',
+  text: '#1A1A1A', muted: '#8A8273', border: '#EDE8DC', danger: '#DC2626',
 };
 
 const CARD_COLORS = [
   '#0F6F5C', '#1E40AF', '#7C3AED', '#B45309',
   '#DC2626', '#0369A1', '#065F46', '#831843',
 ];
-
 const CARD_ICONS = ['💳', '🏦', '💰', '🏧', '💵', '🪙', '💎', '🎯'];
 
-// ─── Dialog تأیید ─────────────────────────────────────────────────────────────
 function ConfirmDialog({ open, title, message, confirmText, cancelText, variant = 'danger', onConfirm, onCancel }) {
   if (!open) return null;
   return (
@@ -33,18 +25,12 @@ function ConfirmDialog({ open, title, message, confirmText, cancelText, variant 
         <h3 className="mb-2 text-right text-[17px] font-bold" style={{ color: C.text }}>{title}</h3>
         <p className="mb-6 text-right text-sm leading-6" style={{ color: C.muted }}>{message}</p>
         <div className="flex gap-3">
-          <button
-            onClick={onConfirm}
-            className="flex-[2] rounded-xl py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: variant === 'danger' ? C.danger : C.brand }}
-          >
+          <button onClick={onConfirm} className="flex-[2] rounded-xl py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: variant === 'danger' ? C.danger : C.brand }}>
             {confirmText || 'تأیید'}
           </button>
-          <button
-            onClick={onCancel}
-            className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors hover:bg-gray-50"
-            style={{ color: C.muted, border: `1px solid ${C.border}` }}
-          >
+          <button onClick={onCancel} className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors hover:bg-gray-50"
+            style={{ color: C.muted, border: `1px solid ${C.border}` }}>
             {cancelText || 'انصراف'}
           </button>
         </div>
@@ -53,43 +39,34 @@ function ConfirmDialog({ open, title, message, confirmText, cancelText, variant 
   );
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ message, variant, visible }) {
   return (
-    <div
-      className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300"
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300"
       style={{
         backgroundColor: variant === 'success' ? C.brand : C.danger,
         opacity: visible ? 1 : 0,
         transform: `translateX(-50%) translateY(${visible ? 0 : 16}px)`,
         pointerEvents: 'none',
-      }}
-    >
+      }}>
       {message}
     </div>
   );
 }
 
-// ─── کامپوننت اصلی ─────────────────────────────────────────────────────────────
 export default function CardsPage() {
   const router = useRouter();
-  const [cards, setCards] = useState([]);
-  const { activeCard, setActiveCard } = useCard();
-  const [loading, setLoading] = useState(true);
+
+  // ── همه چیز از context میاد ──
+  const { cards, setCards, activeCard, setActiveCard, cardsLoading } = useCard();
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
-
-  // فرم
-  const [name, setName] = useState('');
+  const [formLoading,  setFormLoading]  = useState(false);
+  const [name,         setName]         = useState('');
   const [selectedIcon, setSelectedIcon] = useState('💳');
-  const [selectedColor, setSelectedColor] = useState(CARD_COLORS[0]);
-  const [description, setDescription] = useState('');
-
-  // Dialog
-  const [dialog, setDialog] = useState({ open: false });
-
-  // Toast
-  const [toast, setToast] = useState({ visible: false, message: '', variant: 'success' });
+  const [selectedColor,setSelectedColor]= useState(CARD_COLORS[0]);
+  const [description,  setDescription]  = useState('');
+  const [dialog,       setDialog]       = useState({ open: false });
+  const [toast,        setToast]        = useState({ visible: false, message: '', variant: 'success' });
 
   const showToast = (message, variant = 'success') => {
     setToast({ visible: true, message, variant });
@@ -108,52 +85,22 @@ export default function CardsPage() {
       });
     });
 
-  // ─── دریافت کارت‌ها ─────────────────────────────────────────────────────────
-  const fetchCards = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) { router.push('/'); return; }
-
-      const res = await api.get('/cards');
-      setCards(res.data.cards ?? res.data ?? []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-        router.push('/');
-      } else {
-        showToast('خطا در دریافت کارت‌ها', 'danger');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
-
-  useEffect(() => { fetchCards(); }, [fetchCards]);
-
-  // ─── ریست فرم ──────────────────────────────────────────────────────────────
   const resetForm = () => {
-    setName('');
-    setSelectedIcon('💳');
-    setSelectedColor(CARD_COLORS[0]);
-    setDescription('');
+    setName(''); setSelectedIcon('💳');
+    setSelectedColor(CARD_COLORS[0]); setDescription('');
   };
 
-  // ─── ساخت کارت ─────────────────────────────────────────────────────────────
+  // ── ساخت کارت — context's setCards ──
   const handleCreate = useCallback(async () => {
-    if (!name.trim()) {
-      showToast('نام کارت الزامی است', 'danger');
-      return;
-    }
+    if (!name.trim()) { showToast('نام کارت الزامی است', 'danger'); return; }
     setFormLoading(true);
     try {
       const res = await api.post('/cards', {
-        name: name.trim(),
-        icon: selectedIcon,
-        color: selectedColor,
-        description: description.trim(),
+        name: name.trim(), icon: selectedIcon,
+        color: selectedColor, description: description.trim(),
       });
       const newCard = res.data.card ?? res.data;
-      setCards((prev) => [...prev, newCard]);
+      setCards((prev) => [...prev, newCard]); // context
       setIsCreateOpen(false);
       resetForm();
       showToast('کارت با موفقیت ساخته شد');
@@ -162,13 +109,12 @@ export default function CardsPage() {
     } finally {
       setFormLoading(false);
     }
-  }, [name, selectedIcon, selectedColor, description]);
+  }, [name, selectedIcon, selectedColor, description, setCards]);
 
-  // ─── حذف کارت ──────────────────────────────────────────────────────────────
+  // ── حذف کارت — context's setCards ──
   const handleDelete = useCallback(async (card) => {
     const confirmed = await showConfirm(
-      'حذف کارت',
-      `آیا مطمئنید که می‌خواهید کارت «${card.name}» را حذف کنید؟`,
+      'حذف کارت', `آیا مطمئنید که می‌خواهید کارت «${card.name}» را حذف کنید؟`,
       { confirmText: 'بله، حذف شود', variant: 'danger' }
     );
     if (!confirmed) return;
@@ -181,29 +127,23 @@ export default function CardsPage() {
 
     try {
       await api.delete(`/cards/${card._id}?deleteTransactions=${alsoDeleteTx}`);
-      setCards((prev) => prev.filter((c) => c._id !== card._id));
-      if (activeCard?._id === card._id) setActiveCard(null);
-      showToast(
-        alsoDeleteTx ? 'کارت و تراکنش‌های آن حذف شدند' : 'کارت حذف شد، تراکنش‌ها حفظ شدند'
-      );
+      setCards((prev) => prev.filter((c) => c._id !== card._id)); // context
+      if (activeCard?._id === card._id) setActiveCard(null);      // context
+      showToast(alsoDeleteTx ? 'کارت و تراکنش‌های آن حذف شدند' : 'کارت حذف شد، تراکنش‌ها حفظ شدند');
     } catch {
       showToast('خطا در حذف کارت', 'danger');
     }
-  }, [cards, activeCard]);
+  }, [activeCard, setCards, setActiveCard]);
 
-  // ─── لودینگ اولیه ──────────────────────────────────────────────────────────
-  if (loading) {
+  if (cardsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: C.bg }}>
-        <div
-          className="h-10 w-10 animate-spin rounded-full border-4"
-          style={{ borderColor: `${C.brand}30`, borderTopColor: C.brand }}
-        />
+        <div className="h-10 w-10 animate-spin rounded-full border-4"
+          style={{ borderColor: `${C.brand}30`, borderTopColor: C.brand }} />
       </div>
     );
   }
 
-  // ─── رندر اصلی ─────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen" style={{ backgroundColor: C.bg }} dir="rtl" lang="fa">
       <style>{`
@@ -211,7 +151,6 @@ export default function CardsPage() {
         [dir="rtl"] { font-family: 'Vazirmatn', sans-serif; }
       `}</style>
 
-      {/* ── هدر ── */}
       <div className="px-4 pb-2 pt-8 sm:px-8">
         <h1 className="text-2xl font-bold" style={{ color: C.text }}>کارت‌های من</h1>
         <p className="mt-1 text-sm" style={{ color: C.muted }}>
@@ -221,13 +160,11 @@ export default function CardsPage() {
 
       <div className="mx-auto max-w-xl px-4 py-4 sm:px-8">
 
-        {/* ── بنر کارت فعال ── */}
+        {/* بنر کارت فعال */}
         {activeCard && (
-          <button
-            onClick={() => setActiveCard(null)}
+          <button onClick={() => setActiveCard(null)}
             className="mb-4 flex w-full items-center justify-between rounded-2xl p-4 text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: activeCard.color }}
-          >
+            style={{ backgroundColor: activeCard.color }}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">{activeCard.icon}</span>
               <div className="text-right">
@@ -242,39 +179,33 @@ export default function CardsPage() {
           </button>
         )}
 
-        {/* ── حالت خالی ── */}
+        {/* حالت خالی */}
         {cards.length === 0 && (
           <div className="flex flex-col items-center py-20 gap-4">
             <div className="rounded-2xl p-5" style={{ backgroundColor: C.brandLight }}>
               <CreditCard size={40} color={C.brand} />
             </div>
             <p className="text-lg font-semibold" style={{ color: C.text }}>هنوز کارتی نداری</p>
-            <p className="text-sm text-center" style={{ color: C.muted }}>
-              کارت بساز تا تراکنش‌هات رو دسته‌بندی کنی
-            </p>
+            <p className="text-sm text-center" style={{ color: C.muted }}>کارت بساز تا تراکنش‌هات رو دسته‌بندی کنی</p>
           </div>
         )}
 
-        {/* ── لیست کارت‌ها ── */}
+        {/* لیست کارت‌ها */}
         {cards.map((card) => {
           const isActive = activeCard?._id === card._id;
           return (
-            <button
-              key={card._id}
-              onClick={() => setActiveCard(isActive ? null : card)}
+            <button key={card._id}
+              onClick={() => setActiveCard(isActive ? null : card)} // context
               className="mb-3 flex w-full items-center overflow-hidden rounded-2xl bg-white text-right transition-shadow hover:shadow-md"
               style={{
                 border: `2px solid ${isActive ? C.brand : 'transparent'}`,
                 boxShadow: isActive ? `0 0 0 3px ${C.brand}22` : '0 1px 4px rgba(0,0,0,0.06)',
-              }}
-            >
+              }}>
               <div className="w-1.5 self-stretch" style={{ backgroundColor: card.color }} />
               <div className="flex flex-1 items-center justify-between p-4">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl"
-                    style={{ backgroundColor: card.color + '22' }}
-                  >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl"
+                    style={{ backgroundColor: card.color + '22' }}>
                     {card.icon}
                   </div>
                   <div>
@@ -286,11 +217,8 @@ export default function CardsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   {isActive && <CheckCircle2 size={20} color={C.brand} />}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleDelete(card); }}
-                    className="rounded-lg p-1.5 transition-colors hover:bg-red-50"
-                    aria-label="حذف کارت"
-                  >
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(card); }}
+                    className="rounded-lg p-1.5 transition-colors hover:bg-red-50" aria-label="حذف کارت">
                     <Trash2 size={17} color={C.danger} />
                   </button>
                 </div>
@@ -299,123 +227,79 @@ export default function CardsPage() {
           );
         })}
 
-        {/* ── دکمه افزودن ── */}
-        {cards.length < 5 && (
-          <button
-            onClick={() => setIsCreateOpen(true)}
+        {/* دکمه افزودن */}
+        {cards.length < 5 ? (
+          <button onClick={() => setIsCreateOpen(true)}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-4 text-sm font-semibold transition-colors hover:bg-white"
-            style={{ borderColor: C.brand, color: C.brand }}
-          >
-            <Plus size={18} />
-            کارت جدید
+            style={{ borderColor: C.brand, color: C.brand }}>
+            <Plus size={18} /> کارت جدید
           </button>
-        )}
-
-        {cards.length >= 5 && (
-          <p className="mt-3 text-center text-sm" style={{ color: C.muted }}>
-            به حداکثر ۵ کارت رسیدی
-          </p>
+        ) : (
+          <p className="mt-3 text-center text-sm" style={{ color: C.muted }}>به حداکثر ۵ کارت رسیدی</p>
         )}
       </div>
 
-      {/* ── مودال ساخت کارت ── */}
+      {/* مودال ساخت */}
       {isCreateOpen && (
-        <div
-          className="fixed inset-0 z-40 flex items-end justify-center sm:items-center"
+        <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center"
           style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) { setIsCreateOpen(false); resetForm(); } }}
-        >
-          <div
-            className="w-full max-w-md rounded-t-3xl bg-white p-6 pb-10 sm:rounded-3xl sm:pb-6"
-            dir="rtl"
-          >
+          onClick={(e) => { if (e.target === e.currentTarget) { setIsCreateOpen(false); resetForm(); } }}>
+          <div className="w-full max-w-md rounded-t-3xl bg-white p-6 pb-10 sm:rounded-3xl sm:pb-6" dir="rtl">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-lg font-bold" style={{ color: C.text }}>کارت جدید</h2>
-              <button
-                onClick={() => { setIsCreateOpen(false); resetForm(); }}
-                className="rounded-full p-1 transition-colors hover:bg-gray-100"
-              >
+              <button onClick={() => { setIsCreateOpen(false); resetForm(); }}
+                className="rounded-full p-1 transition-colors hover:bg-gray-100">
                 <X size={20} color={C.muted} />
               </button>
             </div>
 
-            {/* پیش‌نمایش */}
-            <div
-              className="mb-5 flex items-center gap-3 rounded-2xl p-5"
-              style={{ backgroundColor: selectedColor }}
-            >
+            <div className="mb-5 flex items-center gap-3 rounded-2xl p-5" style={{ backgroundColor: selectedColor }}>
               <span className="text-3xl">{selectedIcon}</span>
-              <p className="flex-1 truncate text-right text-lg font-bold text-white">
-                {name || 'نام کارت'}
-              </p>
+              <p className="flex-1 truncate text-right text-lg font-bold text-white">{name || 'نام کارت'}</p>
             </div>
 
-            {/* نام */}
-            <input
-              type="text"
-              placeholder="نام کارت (مثلاً ملت، پاسارگاد)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={40}
+            <input type="text" placeholder="نام کارت (مثلاً ملت، پاسارگاد)"
+              value={name} onChange={(e) => setName(e.target.value)} maxLength={40}
               className="mb-3 w-full rounded-xl px-4 py-3 text-right text-sm outline-none"
-              style={{ backgroundColor: C.bg, border: `1px solid ${C.border}`, color: C.text }}
-            />
+              style={{ backgroundColor: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
 
-            {/* توضیح */}
-            <input
-              type="text"
-              placeholder="توضیح (اختیاری)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={100}
+            <input type="text" placeholder="توضیح (اختیاری)"
+              value={description} onChange={(e) => setDescription(e.target.value)} maxLength={100}
               className="mb-4 w-full rounded-xl px-4 py-3 text-right text-sm outline-none"
-              style={{ backgroundColor: C.bg, border: `1px solid ${C.border}`, color: C.text }}
-            />
+              style={{ backgroundColor: C.bg, border: `1px solid ${C.border}`, color: C.text }} />
 
-            {/* آیکون */}
             <p className="mb-2 text-right text-xs" style={{ color: C.muted }}>آیکون</p>
             <div className="mb-4 flex flex-wrap gap-2">
               {CARD_ICONS.map((icon) => (
-                <button
-                  key={icon}
-                  onClick={() => setSelectedIcon(icon)}
+                <button key={icon} onClick={() => setSelectedIcon(icon)}
                   className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl transition-colors"
                   style={{
                     backgroundColor: selectedIcon === icon ? C.brandLight : C.bg,
                     border: `2px solid ${selectedIcon === icon ? C.brand : 'transparent'}`,
-                  }}
-                >
+                  }}>
                   {icon}
                 </button>
               ))}
             </div>
 
-            {/* رنگ */}
             <p className="mb-2 text-right text-xs" style={{ color: C.muted }}>رنگ</p>
             <div className="mb-6 flex flex-wrap gap-2.5">
               {CARD_COLORS.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
+                <button key={color} onClick={() => setSelectedColor(color)}
                   className="h-9 w-9 rounded-full transition-transform hover:scale-110"
                   style={{
                     backgroundColor: color,
                     border: `3px solid ${selectedColor === color ? C.text : 'transparent'}`,
                     outline: selectedColor === color ? `2px solid ${color}` : 'none',
                     outlineOffset: 2,
-                  }}
-                />
+                  }} />
               ))}
             </div>
 
-            {/* دکمه‌ها */}
             <div className="flex gap-3">
-              <button
-                onClick={handleCreate}
-                disabled={formLoading}
+              <button onClick={handleCreate} disabled={formLoading}
                 className="flex-[2] rounded-xl py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                style={{ backgroundColor: C.brand }}
-              >
+                style={{ backgroundColor: C.brand }}>
                 {formLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -423,11 +307,9 @@ export default function CardsPage() {
                   </span>
                 ) : 'بساز'}
               </button>
-              <button
-                onClick={() => { setIsCreateOpen(false); resetForm(); }}
+              <button onClick={() => { setIsCreateOpen(false); resetForm(); }}
                 className="flex-1 rounded-xl py-3 text-sm font-semibold transition-colors hover:bg-gray-50"
-                style={{ border: `1px solid ${C.border}`, color: C.muted }}
-              >
+                style={{ border: `1px solid ${C.border}`, color: C.muted }}>
                 انصراف
               </button>
             </div>
