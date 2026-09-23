@@ -19,11 +19,11 @@ export function CardProvider({ children }) {
   const refetchCards = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) { setCardsLoading(false); return; }
       const res = await api.get("/cards");
       setCards(res.data.cards ?? res.data ?? []);
     } catch {
-      // بی‌سروصدا رد کن
+      // silent
     } finally {
       setCardsLoading(false);
     }
@@ -32,7 +32,11 @@ export function CardProvider({ children }) {
   useEffect(() => { refetchCards(); }, []);
 
   return (
-    <CardContext.Provider value={{ cards, setCards, activeCard, setActiveCard, cardsLoading, refetchCards }}>
+    <CardContext.Provider value={{
+      cards, setCards,
+      activeCard, setActiveCard,
+      cardsLoading, refetchCards,
+    }}>
       {children}
     </CardContext.Provider>
   );
