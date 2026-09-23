@@ -5,24 +5,28 @@ import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 
 import { CurrencyProvider } from "@/context/currencyContext";
-import DashboardHeader   from "@/components/dashboard/DashboardHeader";
-import StatsGrid         from "@/components/dashboard/StatsGrid";
-import TransactionList   from "@/components/dashboard/TransactionList";
-import TransactionModal  from "@/components/dashboard/TransactionModal";
-import AiAnalysisCard    from "@/components/dashboard/AiAnalysisCard";
-import CurrencyToggle    from "@/components/dashboard/CurrencyToggle";
-import QuickNav          from "@/components/dashboard/QuickNav";
+import { CardProvider, useCard } from "@/context/cardContext";   // ← جدید
+import DashboardHeader  from "@/components/dashboard/DashboardHeader";
+import StatsGrid        from "@/components/dashboard/StatsGrid";
+import TransactionList  from "@/components/dashboard/TransactionList";
+import TransactionModal from "@/components/dashboard/TransactionModal";
+import AiAnalysisCard   from "@/components/dashboard/AiAnalysisCard";
+import CurrencyToggle   from "@/components/dashboard/CurrencyToggle";
+import QuickNav         from "@/components/dashboard/QuickNav";
+import ActiveCardBanner from "@/components/dashboard/ActiveCardBanner";  // ← جدید (پایین میسازیم)
 
-export default function DashboardPage() {
+// ── محتوای داشبورد — داخل Provider ─────────────────────────────────────────
+function DashboardContent() {
   const router = useRouter();
-  const [loading,             setLoading]             = useState(true);
-  const [isModalOpen,         setIsModalOpen]         = useState(false);
-  const [editingTransaction,  setEditingTransaction]  = useState(null);
-  const [currentPage,         setCurrentPage]         = useState(1);
-  const [totalPages,          setTotalPages]          = useState(1);
-  const [initialCurrency,     setInitialCurrency]     = useState("IRT");
-  const [categories,          setCategories]          = useState([]);
-  const [catLoading,          setCatLoading]          = useState(false); // ✅ لودینگ ساخت دسته‌بندی
+  const { activeCard } = useCard();   // ← cardId از context
+
+  const [loading,            setLoading]            = useState(true);
+  const [isModalOpen,        setIsModalOpen]        = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [currentPage,        setCurrentPage]        = useState(1);
+  const [totalPages,         setTotalPages]         = useState(1);
+  const [categories,         setCategories]         = useState([]);
+  const [catLoading,         setCatLoading]         = useState(false);
 
   const [stats, setStats] = useState({
     summary: {
@@ -34,16 +38,20 @@ export default function DashboardPage() {
   const [transactions,  setTransactions]  = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount,   setUnreadCount]   = useState(0);
+  const [initialCurrency, setInitialCurrency] = useState("IRT");
 
+  // ── fetch — وقتی activeCard عوض شد دوباره لود میشه ──────────────────────
   const fetchFinanceData = useCallback(async (page) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) { router.push("/"); return; }
-
       setLoading(true);
+
+      const cardParam = activeCard ? `&cardId=${activeCard._id}` : "";
+
       const [statsRes, listRes, notifRes, meRes, categoriesRes] = await Promise.all([
-        api.get("/finance/stats"),
-        api.get(`/finance/my-data?page=${page}&limit=10`),
+        api.get(`/finance/stats${activeCard ? `?cardId=${activeCard._id}` : ""}`),
+        api.get(`/finance/my-data?page=${page}&limit=10${cardParam}`),
         api.get("/notifications"),
         api.get("/auth/me"),
         api.get("/finance/categories"),
@@ -58,7 +66,6 @@ export default function DashboardPage() {
       setInitialCurrency(meRes.data.user.currency ?? "IRT");
       setCategories(categoriesRes.data.categories ?? categoriesRes.data ?? []);
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
         router.push("/");
@@ -66,82 +73,75 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, activeCard]);   // ← activeCard dep
+
+  // وقتی activeCard عوض شد برگرد صفحه ۱
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchFinanceData(1);
+  }, [activeCard]);   // ← هر بار کارت عوض شد ریست
 
   const fetchNotificationsOnly = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
-      const notifRes = await api.get("/notifications");
-      setNotifications(notifRes.data.notifications);
-      setUnreadCount(notifRes.data.unreadCount);
-    } catch (error) {
-      console.error("Error polling notifications:", error);
-    }
+      const res = await api.get("/notifications");
+      setNotifications(res.data.notifications);
+      setUnreadCount(res.data.unreadCount);
+    } catch {}
   }, []);
-
-  useEffect(() => { fetchFinanceData(1); }, [fetchFinanceData]);
 
   useEffect(() => {
     const interval = setInterval(fetchNotificationsOnly, 30000);
     return () => clearInterval(interval);
   }, [fetchNotificationsOnly]);
 
-  // ✅ ساخت دسته‌بندی جدید — نتیجه رو به مدال برمی‌گردونه و لیست رو آپدیت می‌کنه
   const handleCreateCategory = useCallback(async (label, icon) => {
     setCatLoading(true);
     try {
       const res = await api.post("/finance/categories/custom", { label, icon });
       const newCat = res.data.category ?? res.data;
-      // بدون نیاز به fetch مجدد — دسته جدید رو اضافه می‌کنیم
       setCategories((prev) => [...prev, newCat]);
       return { success: true, category: newCat };
     } catch (err) {
-      return {
-        success: false,
-        message: err.response?.data?.message || "خطا در ساخت دسته‌بندی",
-      };
+      return { success: false, message: err.response?.data?.message || "خطا در ساخت دسته‌بندی" };
     } finally {
       setCatLoading(false);
     }
   }, []);
 
-  const handlePageChange        = (page) => fetchFinanceData(page);
-  const handleOpenAddModal      = () => { setEditingTransaction(null); setIsModalOpen(true); };
-  const handleOpenEditModal     = (tx)  => { setEditingTransaction(tx); setIsModalOpen(true); };
-  const handleCloseModal        = () => { setIsModalOpen(false); setEditingTransaction(null); };
+  const handlePageChange    = (page) => fetchFinanceData(page);
+  const handleOpenAddModal  = () => { setEditingTransaction(null); setIsModalOpen(true); };
+  const handleOpenEditModal = (tx) => { setEditingTransaction(tx); setIsModalOpen(true); };
+  const handleCloseModal    = () => { setIsModalOpen(false); setEditingTransaction(null); };
 
   const handleMarkAsRead = async (notifId) => {
     try {
       await api.put(`/notifications/${notifId}/read`, {});
       setNotifications((prev) => prev.map((n) => n._id === notifId ? { ...n, isRead: true } : n));
       setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Error updating notification status:", error);
-    }
+    } catch {}
   };
 
-  const handlePayInstallment = async (id) => {
+  const handlePayInstallment = async (id, cardId = null) => {
     try {
-      await api.put(`/finance/pay-installment/${id}`, {});
+      await api.put(`/finance/pay-installment/${id}`, { cardId });
       fetchFinanceData(currentPage);
-    } catch (error) {
-      console.error("Error paying installment:", error);
+    } catch {
       alert("خطا در پرداخت قسط رخ داد.");
     }
   };
 
   const handleDeleteTransaction = async (transaction) => {
-    const confirmMessage = transaction.type === "LOAN"
+    const msg = transaction.type === "LOAN"
       ? `آیا مطمئنید می‌خواهید وام «${transaction.title}» را حذف کنید؟ تمام اقساط مرتبط هم حذف خواهند شد.`
       : `آیا مطمئنید می‌خواهید تراکنش «${transaction.title}» را حذف کنید؟`;
-    if (!window.confirm(confirmMessage)) return;
+    if (!window.confirm(msg)) return;
     try {
       await api.delete(`/finance/delete/${transaction._id}`);
       fetchFinanceData(currentPage);
-    } catch (error) {
-      console.error("Error deleting transaction:", error);
-      alert(error.response?.data?.message || "خطا در حذف تراکنش رخ داد.");
+    } catch (err) {
+      alert(err.response?.data?.message || "خطا در حذف تراکنش رخ داد.");
     }
   };
 
@@ -149,7 +149,7 @@ export default function DashboardPage() {
 
   if (loading && transactions.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F7F4EE] flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-[#F7F4EE] flex items-center justify-center">
         <Loader2 className="animate-spin text-[#0F6F5C]" size={40} />
       </div>
     );
@@ -175,6 +175,10 @@ export default function DashboardPage() {
           <AiAnalysisCard />
           <QuickNav />
           <CurrencyToggle />
+
+          {/* ── بنر کارت فعال ── */}
+          <ActiveCardBanner />
+
           <StatsGrid summary={stats.summary} />
 
           <TransactionList
@@ -190,7 +194,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* ✅ onCreateCategory و categoryFormLoading اضافه شدن */}
         <TransactionModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
@@ -202,5 +205,14 @@ export default function DashboardPage() {
         />
       </div>
     </CurrencyProvider>
+  );
+}
+
+// ── wrapper — CardProvider بیرونه ────────────────────────────────────────────
+export default function DashboardPage() {
+  return (
+    <CardProvider>
+      <DashboardContent />
+    </CardProvider>
   );
 }
