@@ -3,9 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
-
 import { CurrencyProvider } from "@/context/currencyContext";
-import { CardProvider, useCard } from "@/context/cardContext";   // ← جدید
+import { useCard } from "@/context/cardContext"; // فقط useCard — نه CardProvider
 import DashboardHeader  from "@/components/dashboard/DashboardHeader";
 import StatsGrid        from "@/components/dashboard/StatsGrid";
 import TransactionList  from "@/components/dashboard/TransactionList";
@@ -13,12 +12,11 @@ import TransactionModal from "@/components/dashboard/TransactionModal";
 import AiAnalysisCard   from "@/components/dashboard/AiAnalysisCard";
 import CurrencyToggle   from "@/components/dashboard/CurrencyToggle";
 import QuickNav         from "@/components/dashboard/QuickNav";
-import ActiveCardBanner from "@/components/dashboard/ActiveCardBanner";  // ← جدید (پایین میسازیم)
+import ActiveCardBanner from "@/components/dashboard/ActiveCardBanner";
 
-// ── محتوای داشبورد — داخل Provider ─────────────────────────────────────────
-function DashboardContent() {
+export default function DashboardPage() {
   const router = useRouter();
-  const { activeCard } = useCard();   // ← cardId از context
+  const { activeCard } = useCard(); // از layout's CardProvider
 
   const [loading,            setLoading]            = useState(true);
   const [isModalOpen,        setIsModalOpen]        = useState(false);
@@ -27,7 +25,9 @@ function DashboardContent() {
   const [totalPages,         setTotalPages]         = useState(1);
   const [categories,         setCategories]         = useState([]);
   const [catLoading,         setCatLoading]         = useState(false);
-
+  const [initialCurrency,    setInitialCurrency]    = useState("IRT");
+  const [notifications,      setNotifications]      = useState([]);
+  const [unreadCount,        setUnreadCount]        = useState(0);
   const [stats, setStats] = useState({
     summary: {
       cashBalance: 0, totalIncome: 0, totalExpense: 0,
@@ -35,23 +35,20 @@ function DashboardContent() {
     },
     expenseCategories: [],
   });
-  const [transactions,  setTransactions]  = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount,   setUnreadCount]   = useState(0);
-  const [initialCurrency, setInitialCurrency] = useState("IRT");
+  const [transactions, setTransactions] = useState([]);
 
-  // ── fetch — وقتی activeCard عوض شد دوباره لود میشه ──────────────────────
   const fetchFinanceData = useCallback(async (page) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) { router.push("/"); return; }
       setLoading(true);
 
-      const cardParam = activeCard ? `&cardId=${activeCard._id}` : "";
+      const cardParam = activeCard ? `?cardId=${activeCard._id}` : "";
+      const cardQuery = activeCard ? `&cardId=${activeCard._id}` : "";
 
       const [statsRes, listRes, notifRes, meRes, categoriesRes] = await Promise.all([
-        api.get(`/finance/stats${activeCard ? `?cardId=${activeCard._id}` : ""}`),
-        api.get(`/finance/my-data?page=${page}&limit=10${cardParam}`),
+        api.get(`/finance/stats${cardParam}`),
+        api.get(`/finance/my-data?page=${page}&limit=10${cardQuery}`),
         api.get("/notifications"),
         api.get("/auth/me"),
         api.get("/finance/categories"),
@@ -73,28 +70,24 @@ function DashboardContent() {
     } finally {
       setLoading(false);
     }
-  }, [router, activeCard]);   // ← activeCard dep
+  }, [router, activeCard]);
 
-  // وقتی activeCard عوض شد برگرد صفحه ۱
+  // هر بار activeCard عوض شد → صفحه ۱ و fetch مجدد
   useEffect(() => {
     setCurrentPage(1);
     fetchFinanceData(1);
-  }, [activeCard]);   // ← هر بار کارت عوض شد ریست
-
-  const fetchNotificationsOnly = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      const res = await api.get("/notifications");
-      setNotifications(res.data.notifications);
-      setUnreadCount(res.data.unreadCount);
-    } catch {}
-  }, []);
+  }, [activeCard]); // eslint-disable-line
 
   useEffect(() => {
-    const interval = setInterval(fetchNotificationsOnly, 30000);
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get("/notifications");
+        setNotifications(res.data.notifications);
+        setUnreadCount(res.data.unreadCount);
+      } catch {}
+    }, 30000);
     return () => clearInterval(interval);
-  }, [fetchNotificationsOnly]);
+  }, []);
 
   const handleCreateCategory = useCallback(async (label, icon) => {
     setCatLoading(true);
@@ -104,45 +97,36 @@ function DashboardContent() {
       setCategories((prev) => [...prev, newCat]);
       return { success: true, category: newCat };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || "خطا در ساخت دسته‌بندی" };
+      return { success: false, message: err.response?.data?.message || "خطا" };
     } finally {
       setCatLoading(false);
     }
   }, []);
 
-  const handlePageChange    = (page) => fetchFinanceData(page);
-  const handleOpenAddModal  = () => { setEditingTransaction(null); setIsModalOpen(true); };
-  const handleOpenEditModal = (tx) => { setEditingTransaction(tx); setIsModalOpen(true); };
-  const handleCloseModal    = () => { setIsModalOpen(false); setEditingTransaction(null); };
-
-  const handleMarkAsRead = async (notifId) => {
+  const handleMarkAsRead = async (id) => {
     try {
-      await api.put(`/notifications/${notifId}/read`, {});
-      setNotifications((prev) => prev.map((n) => n._id === notifId ? { ...n, isRead: true } : n));
+      await api.put(`/notifications/${id}/read`, {});
+      setNotifications((prev) => prev.map((n) => n._id === id ? { ...n, isRead: true } : n));
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {}
   };
 
-  const handlePayInstallment = async (id, cardId = null) => {
+  const handlePayInstallment = async (id) => {
     try {
-      await api.put(`/finance/pay-installment/${id}`, { cardId });
+      await api.put(`/finance/pay-installment/${id}`, {});
       fetchFinanceData(currentPage);
-    } catch {
-      alert("خطا در پرداخت قسط رخ داد.");
-    }
+    } catch { alert("خطا در پرداخت قسط"); }
   };
 
-  const handleDeleteTransaction = async (transaction) => {
-    const msg = transaction.type === "LOAN"
-      ? `آیا مطمئنید می‌خواهید وام «${transaction.title}» را حذف کنید؟ تمام اقساط مرتبط هم حذف خواهند شد.`
-      : `آیا مطمئنید می‌خواهید تراکنش «${transaction.title}» را حذف کنید؟`;
+  const handleDeleteTransaction = async (tx) => {
+    const msg = tx.type === "LOAN"
+      ? `آیا مطمئنید می‌خواهید وام «${tx.title}» را حذف کنید؟`
+      : `آیا مطمئنید می‌خواهید تراکنش «${tx.title}» را حذف کنید؟`;
     if (!window.confirm(msg)) return;
     try {
-      await api.delete(`/finance/delete/${transaction._id}`);
+      await api.delete(`/finance/delete/${tx._id}`);
       fetchFinanceData(currentPage);
-    } catch (err) {
-      alert(err.response?.data?.message || "خطا در حذف تراکنش رخ داد.");
-    }
+    } catch (err) { alert(err.response?.data?.message || "خطا در حذف"); }
   };
 
   const handleLogout = () => { localStorage.removeItem("token"); router.push("/"); };
@@ -161,42 +145,32 @@ function DashboardContent() {
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
           .font-sans { font-family: 'Vazirmatn', sans-serif; }
-          .tabular { font-feature-settings: "tnum"; }
         `}</style>
-
         <div className="max-w-5xl mx-auto">
           <DashboardHeader
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkAsRead={handleMarkAsRead}
-            onLogout={handleLogout}
+            notifications={notifications} unreadCount={unreadCount}
+            onMarkAsRead={handleMarkAsRead} onLogout={handleLogout}
           />
-
           <AiAnalysisCard />
           <QuickNav />
           <CurrencyToggle />
-
-          {/* ── بنر کارت فعال ── */}
           <ActiveCardBanner />
-
           <StatsGrid summary={stats.summary} />
-
           <TransactionList
             transactions={transactions}
             summary={stats.summary}
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={handlePageChange}
+            onPageChange={(page) => fetchFinanceData(page)}
             onPayInstallment={handlePayInstallment}
-            onOpenModal={handleOpenAddModal}
-            onEditTransaction={handleOpenEditModal}
+            onOpenModal={() => { setEditingTransaction(null); setIsModalOpen(true); }}
+            onEditTransaction={(tx) => { setEditingTransaction(tx); setIsModalOpen(true); }}
             onDeleteTransaction={handleDeleteTransaction}
           />
         </div>
-
         <TransactionModal
           isOpen={isModalOpen}
-          onClose={handleCloseModal}
+          onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }}
           onRefreshData={() => fetchFinanceData(currentPage)}
           editingTransaction={editingTransaction}
           categories={categories}
@@ -205,14 +179,5 @@ function DashboardContent() {
         />
       </div>
     </CurrencyProvider>
-  );
-}
-
-// ── wrapper — CardProvider بیرونه ────────────────────────────────────────────
-export default function DashboardPage() {
-  return (
-    <CardProvider>
-      <DashboardContent />
-    </CardProvider>
   );
 }
