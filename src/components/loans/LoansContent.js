@@ -36,10 +36,16 @@ export default function LoansContent() {
   useEffect(() => { fetchLoans(); }, [fetchLoans]);
 
   // ── کلیک روی "پرداخت قسط" → modal ──
-  const handlePay = useCallback((installmentId) => {
-    setPendingInstallmentId(installmentId);
-    setPayModalVisible(true);
-  }, []);
+const handlePay = useCallback(async (installmentId, cardId) => {
+  try {
+    await api.put(`/finance/pay-installment/${installmentId}`, {
+      cardId: cardId ?? null, // ← اینجا مهمه
+    });
+    fetchLoans();
+  } catch (err) {
+    alert(err.response?.data?.message || "خطا در پرداخت قسط");
+  }
+}, [fetchLoans]);
 
   // ── تأیید پرداخت با cardId ──
   const handleConfirmPay = useCallback(async (cardId) => {
