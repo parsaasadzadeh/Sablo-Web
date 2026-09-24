@@ -1,7 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useCard } from "@/context/cardContext";
-
 import { useRouter } from "next/navigation";
 import {
   Search, X, Calendar, Download, CheckCircle,
@@ -12,13 +10,12 @@ import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import api from "@/lib/axios";
 import { useCurrency } from "@/context/currencyContext";
-import TransactionModal from "@/components/dashboard/TransactionModal";
+import { useCard } from "@/context/cardContext";
+import TransactionModal       from "@/components/dashboard/TransactionModal";
 import TransactionDetailModal from "@/components/dashboard/TransactionDetailModal";
-
-// ── ثابت‌ها ───────────────────────────────────────────────────────────────────
+import PayInstallmentModal    from "@/components/dashboard/PayInstallmentModal";
 
 const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام" };
-
 const TYPE_COLORS = {
   INCOME:      "bg-emerald-50 text-emerald-700 border-emerald-100",
   EXPENSE:     "bg-rose-50    text-rose-700    border-rose-100",
@@ -26,20 +23,15 @@ const TYPE_COLORS = {
   LOAN:        "bg-blue-50    text-blue-700    border-blue-100",
 };
 
-// ── کمک‌توابع ──────────────────────────────────────────────────────────────────
-
 function formatJalali(iso) {
   if (!iso) return "";
   try { return new Date(iso).toLocaleDateString("fa-IR"); } catch { return ""; }
 }
 
-// تبدیل Date object یا ISO string به YYYY-MM-DD برای API
 function toISODate(val) {
   if (!val) return "";
   try { return new Date(val).toISOString().split("T")[0]; } catch { return ""; }
 }
-
-// ── Pagination ────────────────────────────────────────────────────────────────
 
 function buildPageList(current, total) {
   const SIBLINGS = 1;
@@ -56,64 +48,46 @@ function buildPageList(current, total) {
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
-  const pages   = buildPageList(currentPage, totalPages);
-  const isFirst = currentPage <= 1;
-  const isLast  = currentPage >= totalPages;
-  const goTo = (p) => { if (p >= 1 && p <= totalPages && p !== currentPage) onPageChange(p); };
+  const pages  = buildPageList(currentPage, totalPages);
+  const goTo   = (p) => { if (p >= 1 && p <= totalPages && p !== currentPage) onPageChange(p); };
   return (
     <div className="flex items-center justify-center gap-1.5 pt-4 border-t border-[#EDE8DC] mt-4">
-      <button
-        onClick={() => goTo(currentPage - 1)}
-        disabled={isFirst}
-        className="w-9 h-9 rounded-xl border border-[#EDE8DC] bg-white flex items-center justify-center disabled:opacity-30 hover:bg-[#F7F4EE] transition-colors"
-      >
+      <button onClick={() => goTo(currentPage - 1)} disabled={currentPage <= 1}
+        className="w-9 h-9 rounded-xl border border-[#EDE8DC] bg-white flex items-center justify-center disabled:opacity-30 hover:bg-[#F7F4EE] transition-colors">
         <ChevronRight size={17} />
       </button>
-
       <div className="flex items-center gap-1">
         {pages.map((p, i) =>
           p === "dots-start" || p === "dots-end" ? (
             <span key={`${p}-${i}`} className="w-8 text-center text-sm text-[#8A8273]">···</span>
           ) : (
-            <button
-              key={p}
-              onClick={() => goTo(p)}
-              disabled={p === currentPage}
+            <button key={p} onClick={() => goTo(p)} disabled={p === currentPage}
               className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-colors ${
                 p === currentPage
                   ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
                   : "bg-white border-[#EDE8DC] text-[#26241F] hover:bg-[#F7F4EE]"
-              }`}
-            >
+              }`}>
               {p}
             </button>
           )
         )}
       </div>
-
-      <button
-        onClick={() => goTo(currentPage + 1)}
-        disabled={isLast}
-        className="w-9 h-9 rounded-xl border border-[#EDE8DC] bg-white flex items-center justify-center disabled:opacity-30 hover:bg-[#F7F4EE] transition-colors"
-      >
+      <button onClick={() => goTo(currentPage + 1)} disabled={currentPage >= totalPages}
+        className="w-9 h-9 rounded-xl border border-[#EDE8DC] bg-white flex items-center justify-center disabled:opacity-30 hover:bg-[#F7F4EE] transition-colors">
         <ChevronLeft size={17} />
       </button>
     </div>
   );
 }
 
-// ── TxRow ─────────────────────────────────────────────────────────────────────
-
 function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
   const isPositive = tx.type === "INCOME" || tx.type === "LOAN";
-
   return (
     <div className="py-3.5 border-b border-[#EDE8DC] last:border-0">
       <div className="flex flex-row-reverse items-start gap-3">
         <div className={`shrink-0 w-12 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold border ${TYPE_COLORS[tx.type]}`}>
           {TYPE_LABELS[tx.type]}
         </div>
-
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-semibold text-[#26241F] truncate">{tx.title}</p>
           {tx.description && (
@@ -131,7 +105,6 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
             </span>
           )}
         </div>
-
         <div className="shrink-0 text-left">
           <p className={`text-base font-extrabold ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
             {isPositive ? "+" : "-"}{display(tx.amount)}
@@ -140,14 +113,11 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
           <p className="text-[10px] text-[#B5AFA3] mt-0.5">{formatJalali(tx.date)}</p>
         </div>
       </div>
-
       <div className="flex flex-row-reverse items-center justify-between mt-2.5">
         <div>
           {tx.type === "INSTALLMENT" && !tx.isPaid && (
-            <button
-              onClick={() => onPay(tx._id)}
-              className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors"
-            >
+            <button onClick={() => onPay(tx._id)}
+              className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors">
               <CheckCircle size={11} /> پرداخت
             </button>
           )}
@@ -157,7 +127,6 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
             </span>
           )}
         </div>
-
         <div className="flex items-center gap-2">
           <button onClick={() => onView(tx)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#F7F4EE] transition-colors">
             <Eye size={14} className="text-[#8A8273]" />
@@ -174,62 +143,54 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
   );
 }
 
-// ── صفحه اصلی ─────────────────────────────────────────────────────────────────
-
 export default function TransactionsContent() {
   const router = useRouter();
   const { display, unit } = useCurrency();
+  const { activeCard, cards } = useCard();
 
-  const [transactions,        setTransactions]        = useState([]);
-  const [loading,             setLoading]             = useState(true);
-  const [downloading,         setDownloading]         = useState(false);
-  const [currentPage,         setCurrentPage]         = useState(1);
-  const [totalPages,          setTotalPages]          = useState(1);
-  const [totalItems,          setTotalItems]          = useState(0);
-  const [searchQuery,         setSearchQuery]         = useState("");
-  const { activeCard } = useCard();
+  const [transactions,         setTransactions]         = useState([]);
+  const [loading,              setLoading]              = useState(true);
+  const [downloading,          setDownloading]          = useState(false);
+  const [currentPage,          setCurrentPage]          = useState(1);
+  const [totalPages,           setTotalPages]           = useState(1);
+  const [totalItems,           setTotalItems]           = useState(0);
+  const [searchQuery,          setSearchQuery]          = useState("");
+  const [fromDate,             setFromDate]             = useState(null);
+  const [toDate,               setToDate]               = useState(null);
+  const [showDateFilter,       setShowDateFilter]       = useState(false);
+  const [selectedTx,           setSelectedTx]           = useState(null);
+  const [editingTx,            setEditingTx]            = useState(null);
+  const [isModalOpen,          setIsModalOpen]          = useState(false);
+  const [categories,           setCategories]           = useState([]);
+  const [categoryFormLoading,  setCategoryFormLoading]  = useState(false);
 
-  // تاریخ‌ها به صورت Date object ذخیره میشن — برای DatePicker
-  const [fromDate,            setFromDate]            = useState(null);
-  const [toDate,              setToDate]              = useState(null);
-  const [showDateFilter,      setShowDateFilter]      = useState(false);
-
-  const [selectedTx,          setSelectedTx]          = useState(null);
-  const [editingTx,           setEditingTx]           = useState(null);
-  const [isModalOpen,         setIsModalOpen]         = useState(false);
-  const [categories,          setCategories]          = useState([]);
-  const [categoryFormLoading, setCategoryFormLoading] = useState(false);
+  // ── state مودال پرداخت قسط ──
+  const [payModalVisible,      setPayModalVisible]      = useState(false);
+  const [pendingInstallmentId, setPendingInstallmentId] = useState(null);
 
   const searchTimeoutRef = useRef(null);
   const hasDateFilter    = Boolean(fromDate || toDate);
 
-  // ── fetch ────────────────────────────────────────────────────────────────────
+  // ── fetch ──
+  const fetchTransactions = useCallback(async (page = 1, search = "", from = null, to = null) => {
+    try {
+      const params = { page, limit: 20 };
+      if (search)     params.search = search;
+      if (from)       params.from   = toISODate(from);
+      if (to)         params.to     = toISODate(to);
+      if (activeCard) params.cardId = activeCard._id;
+      const res = await api.get("/finance/my-data", { params });
+      setTransactions(res.data.transactions ?? []);
+      setCurrentPage(res.data.currentPage ?? 1);
+      setTotalPages(res.data.totalPages ?? 1);
+      setTotalItems(res.data.totalItems ?? 0);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeCard]);
 
-  
-// fetchTransactions رو آپدیت کن:
-const fetchTransactions = useCallback(async (page = 1, search = "", from = null, to = null) => {
-  try {
-    const params = { page, limit: 20 };
-    if (search)      params.search  = search;
-    if (from)        params.from    = toISODate(from);
-    if (to)          params.to      = toISODate(to);
-    if (activeCard)  params.cardId  = activeCard._id; // ← فیلتر کارت
-    const res = await api.get("/finance/my-data", { params });
-    setTransactions(res.data.transactions ?? []);
-    setCurrentPage(res.data.currentPage ?? 1);
-    setTotalPages(res.data.totalPages ?? 1);
-    setTotalItems(res.data.totalItems ?? 0);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
-  }
-}, [activeCard]); // ← dep
-
-useEffect(() => {
-  setCurrentPage(1);
-  fetchTransactions(1, searchQuery, fromDate, toDate);
-}, [activeCard]);
   const fetchCategories = useCallback(async () => {
     try {
       const res = await api.get("/finance/categories");
@@ -240,9 +201,12 @@ useEffect(() => {
   useEffect(() => {
     fetchTransactions(1, "", null, null);
     fetchCategories();
-  }, []);
+  }, []); // eslint-disable-line
 
-  // ── ساخت دسته‌بندی ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchTransactions(1, searchQuery, fromDate, toDate);
+  }, [activeCard]); // eslint-disable-line
 
   const createCustomCategory = useCallback(async (label, icon) => {
     setCategoryFormLoading(true);
@@ -258,8 +222,6 @@ useEffect(() => {
     }
   }, []);
 
-  // ── دانلود CSV ───────────────────────────────────────────────────────────────
-
   const handleDownloadCSV = async () => {
     if (downloading) return;
     setDownloading(true);
@@ -268,6 +230,7 @@ useEffect(() => {
       if (searchQuery) params.append("search", searchQuery);
       if (fromDate)    params.append("from", toISODate(fromDate));
       if (toDate)      params.append("to",   toISODate(toDate));
+      if (activeCard)  params.append("cardId", activeCard._id);
       const res = await api.get(
         `/finance/export-csv${params.toString() ? "?" + params.toString() : ""}`,
         { responseType: "text", transformResponse: [(d) => d] }
@@ -286,8 +249,6 @@ useEffect(() => {
       setDownloading(false);
     }
   };
-
-  // ── سرچ با debounce ──────────────────────────────────────────────────────────
 
   const handleSearch = (text) => {
     setSearchQuery(text);
@@ -311,8 +272,6 @@ useEffect(() => {
     setShowDateFilter(false);
   };
 
-  // ── حذف ─────────────────────────────────────────────────────────────────────
-
   const handleDelete = useCallback(async (tx) => {
     const msg = tx.type === "LOAN"
       ? `آیا مطمئنید می‌خواهید وام «${tx.title}» را حذف کنید؟ تمام اقساط هم حذف خواهند شد.`
@@ -326,26 +285,33 @@ useEffect(() => {
     }
   }, [currentPage, searchQuery, fromDate, toDate, fetchTransactions]);
 
-  // ── پرداخت قسط ──────────────────────────────────────────────────────────────
+  // ── کلیک روی "پرداخت" → modal نشون بده ──
+  const handlePayInstallment = useCallback((id) => {
+    setPendingInstallmentId(id);
+    setPayModalVisible(true);
+  }, []);
 
-  const handlePayInstallment = useCallback(async (id) => {
+  // ── تأیید پرداخت با cardId (یا null) ──
+  const handleConfirmPay = useCallback(async (cardId) => {
+    setPayModalVisible(false);
+    if (!pendingInstallmentId) return;
     try {
-      await api.put(`/finance/pay-installment/${id}`, {});
+      await api.put(`/finance/pay-installment/${pendingInstallmentId}`, {
+        cardId: cardId ?? null,
+      });
       fetchTransactions(currentPage, searchQuery, fromDate, toDate);
     } catch {
       alert("خطا در پرداخت قسط");
+    } finally {
+      setPendingInstallmentId(null);
     }
-  }, [currentPage, searchQuery, fromDate, toDate, fetchTransactions]);
-
-  // ── تغییر صفحه ──────────────────────────────────────────────────────────────
+  }, [pendingInstallmentId, currentPage, searchQuery, fromDate, toDate, fetchTransactions]);
 
   const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
     fetchTransactions(page, searchQuery, fromDate, toDate);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [searchQuery, fromDate, toDate, fetchTransactions]);
-
-  // ── رندر ─────────────────────────────────────────────────────────────────────
 
   return (
     <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] font-sans">
@@ -359,128 +325,81 @@ useEffect(() => {
       <div className="max-w-2xl mx-auto p-4 sm:p-6">
 
         {/* هدر */}
-        {/* هدر */}
-<div className="flex items-center mb-5">
-  {/* بازگشت — سمت راست در RTL */}
-  <button
-    onClick={() => router.push("/dashboard")}
-    className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
-  >
-    <ArrowRight size={15} /> بازگشت
-  </button>
+        <div className="flex items-center mb-5">
+          <button onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors">
+            <ArrowRight size={15} /> بازگشت
+          </button>
+          <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">تراکنش‌ها</h1>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
+              className="bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors">
+              + جدید
+            </button>
+            <button onClick={handleDownloadCSV} disabled={downloading}
+              className="w-9 h-9 rounded-xl border border-[#0F6F5C] bg-[#E6F4F1] flex items-center justify-center hover:bg-[#CCE9E3] transition-colors disabled:opacity-50"
+              title="دانلود CSV">
+              {downloading
+                ? <Loader2 size={15} className="animate-spin text-[#0F6F5C]" />
+                : <Download size={15} className="text-[#0F6F5C]" />}
+            </button>
+          </div>
+        </div>
 
-  {/* عنوان — وسط */}
-  <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">تراکنش‌ها</h1>
-
-  {/* دکمه‌های اکشن — سمت چپ در RTL */}
-  <div className="flex items-center gap-2">
-    <button
-      onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
-      className="bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
-    >
-      + جدید
-    </button>
-
-    <button
-      onClick={handleDownloadCSV}
-      disabled={downloading}
-      className="w-9 h-9 rounded-xl border border-[#0F6F5C] bg-[#E6F4F1] flex items-center justify-center hover:bg-[#CCE9E3] transition-colors disabled:opacity-50"
-      title="دانلود CSV"
-    >
-      {downloading
-        ? <Loader2 size={15} className="animate-spin text-[#0F6F5C]" />
-        : <Download size={15} className="text-[#0F6F5C]" />}
-    </button>
-  </div>
-</div>
-        {/* سرچ و دکمه فیلتر */}
+        {/* سرچ و فیلتر */}
         <div className="flex flex-row-reverse gap-2 mb-3">
           <div className="flex-1 flex flex-row-reverse items-center gap-2 bg-white border border-[#EDE8DC] rounded-xl px-3 py-2.5">
             <Search size={14} className="text-[#8A8273] shrink-0" />
-            <input
-              type="text"
-              placeholder="جستجو..."
-              value={searchQuery}
+            <input type="text" placeholder="جستجو..." value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="flex-1 text-sm text-right bg-transparent outline-none text-[#26241F] placeholder:text-[#B5AFA3]"
-            />
+              className="flex-1 text-sm text-right bg-transparent outline-none text-[#26241F] placeholder:text-[#B5AFA3]" />
             {searchQuery && (
               <button onClick={() => handleSearch("")}>
                 <X size={13} className="text-[#8A8273]" />
               </button>
             )}
           </div>
-
-          <button
-            onClick={() => setShowDateFilter(!showDateFilter)}
+          <button onClick={() => setShowDateFilter(!showDateFilter)}
             className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-colors ${
               hasDateFilter
                 ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
                 : "bg-white border-[#EDE8DC] text-[#0F6F5C] hover:bg-[#F7F4EE]"
-            }`}
-          >
+            }`}>
             <Calendar size={15} />
           </button>
         </div>
 
-        {/* پانل فیلتر تاریخ شمسی */}
+        {/* پانل فیلتر تاریخ */}
         {showDateFilter && (
           <div className="bg-white border border-[#EDE8DC] rounded-2xl p-4 mb-4 space-y-3">
             <p className="text-xs font-bold text-[#26241F] text-right">فیلتر بازه زمانی</p>
-
             <div className="flex flex-row-reverse gap-3">
-              {/* از تاریخ */}
               <div className="flex-1">
-                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">
-                  از تاریخ
-                </label>
-                <DatePicker
-                  calendar={persian}
-                  locale={persian_fa}
-                  value={fromDate}
+                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">از تاریخ</label>
+                <DatePicker calendar={persian} locale={persian_fa} value={fromDate}
                   onChange={(d) => setFromDate(d?.isValid ? d.toDate() : null)}
-                  calendarPosition="bottom-right"
-                  placeholder="انتخاب تاریخ"
-                  maxDate={toDate || undefined}
-                />
+                  calendarPosition="bottom-right" placeholder="انتخاب تاریخ" maxDate={toDate || undefined} />
               </div>
-
-              {/* تا تاریخ */}
               <div className="flex-1">
-                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">
-                  تا تاریخ
-                </label>
-                <DatePicker
-                  calendar={persian}
-                  locale={persian_fa}
-                  value={toDate}
+                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">تا تاریخ</label>
+                <DatePicker calendar={persian} locale={persian_fa} value={toDate}
                   onChange={(d) => setToDate(d?.isValid ? d.toDate() : null)}
-                  calendarPosition="bottom-left"
-                  placeholder="انتخاب تاریخ"
-                  minDate={fromDate || undefined}
-                />
+                  calendarPosition="bottom-left" placeholder="انتخاب تاریخ" minDate={fromDate || undefined} />
               </div>
             </div>
-
-            {/* نمایش بازه انتخاب‌شده */}
             {hasDateFilter && (
               <p className="text-[11px] text-[#0F6F5C] text-right font-medium">
                 {fromDate ? formatJalali(fromDate) : "..."} تا {toDate ? formatJalali(toDate) : "..."}
               </p>
             )}
-
             <div className="flex flex-row-reverse gap-2">
-              <button
-                onClick={applyDateFilter}
-                className="flex-1 bg-[#0F6F5C] text-white text-xs font-bold rounded-xl py-2.5 hover:bg-[#0a5c4a] transition-colors"
-              >
+              <button onClick={applyDateFilter}
+                className="flex-1 bg-[#0F6F5C] text-white text-xs font-bold rounded-xl py-2.5 hover:bg-[#0a5c4a] transition-colors">
                 اعمال فیلتر
               </button>
               {hasDateFilter && (
-                <button
-                  onClick={clearDateFilter}
-                  className="bg-rose-50 text-rose-600 text-xs font-semibold rounded-xl px-4 py-2.5 hover:bg-rose-100 transition-colors"
-                >
+                <button onClick={clearDateFilter}
+                  className="bg-rose-50 text-rose-600 text-xs font-semibold rounded-xl px-4 py-2.5 hover:bg-rose-100 transition-colors">
                   حذف فیلتر
                 </button>
               )}
@@ -488,7 +407,7 @@ useEffect(() => {
           </div>
         )}
 
-        {/* کارت لیست */}
+        {/* لیست */}
         <div className="bg-white rounded-2xl border border-[#EDE8DC] shadow-sm">
           {!loading && totalItems > 0 && (
             <div className="px-4 py-3 border-b border-[#EDE8DC] flex flex-row-reverse items-center justify-between">
@@ -500,7 +419,6 @@ useEffect(() => {
               )}
             </div>
           )}
-
           <div className="px-4">
             {loading ? (
               <div className="flex items-center justify-center py-16">
@@ -512,52 +430,40 @@ useEffect(() => {
                   {searchQuery || hasDateFilter ? "تراکنشی با این فیلتر یافت نشد" : "تراکنشی یافت نشد"}
                 </p>
                 {!searchQuery && !hasDateFilter && (
-                  <button
-                    onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
-                    className="text-xs text-[#0F6F5C] font-semibold hover:underline mt-1"
-                  >
+                  <button onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
+                    className="text-xs text-[#0F6F5C] font-semibold hover:underline mt-1">
                     اولین تراکنشت رو ثبت کن
                   </button>
                 )}
               </div>
             ) : (
               transactions.map((tx) => (
-                <TxRow
-                  key={tx._id}
-                  tx={tx}
+                <TxRow key={tx._id} tx={tx}
                   onPay={handlePayInstallment}
                   onView={setSelectedTx}
                   onEdit={(tx) => { setEditingTx(tx); setIsModalOpen(true); }}
                   onDelete={handleDelete}
-                  display={display}
-                  unit={unit}
+                  display={display} unit={unit}
                 />
               ))
             )}
           </div>
-
           {!loading && totalPages > 1 && (
             <div className="px-4 pb-4">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
             </div>
           )}
         </div>
       </div>
 
-      {/* مودال جزئیات */}
       <TransactionDetailModal
         transaction={selectedTx}
         onClose={() => setSelectedTx(null)}
         onEdit={(tx) => { setSelectedTx(null); setEditingTx(tx); setIsModalOpen(true); }}
         onDelete={(tx) => { setSelectedTx(null); handleDelete(tx); }}
-        onPayInstallment={(id) => { handlePayInstallment(id); setSelectedTx(null); }}
+        onPayInstallment={(id) => { setSelectedTx(null); handlePayInstallment(id); }}
       />
 
-      {/* مودال ثبت/ویرایش */}
       <TransactionModal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingTx(null); }}
@@ -566,6 +472,17 @@ useEffect(() => {
         categories={categories}
         onCreateCategory={createCustomCategory}
         categoryFormLoading={categoryFormLoading}
+      />
+
+      {/* ── مودال پرداخت قسط ── */}
+      <PayInstallmentModal
+        visible={payModalVisible}
+        onClose={() => {
+          setPayModalVisible(false);
+          setPendingInstallmentId(null);
+        }}
+        onConfirm={handleConfirmPay}
+        cards={cards}
       />
     </div>
   );
