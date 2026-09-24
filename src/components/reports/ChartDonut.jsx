@@ -30,26 +30,27 @@ function buildArcPath(cx, cy, outerR, innerR, startAngle, endAngle) {
   ].join(" ");
 }
 
-export default function ChartDonut({ display, unit, from, to }) {
+export default function ChartDonut({ display, unit, from, to , cardId  }) {
   const [activeSlice, setActiveSlice] = useState(null);
   const [summary, setSummary]         = useState(null);
   const [loading, setLoading]         = useState(true);
 
-  const fetchSummary = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (from) params.from = from;
-      if (to)   params.to   = to;
-      const res = await api.get("/finance/stats", { params });
-      setSummary(res.data.summary ?? null);
-      setActiveSlice(null);
-    } catch {
-      setSummary(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [from, to]);
+ const fetchSummary = useCallback(async () => {
+  setLoading(true);
+  try {
+    const params = {};
+    if (from)   params.from    = from;
+    if (to)     params.to      = to;
+    if (cardId) params.cardId  = cardId;   // ← اضافه شد
+    const res = await api.get("/finance/stats", { params });
+    setSummary(res.data.summary ?? null);
+    setActiveSlice(null);
+  } catch {
+    setSummary(null);
+  } finally {
+    setLoading(false);
+  }
+}, [from, to, cardId]);
 
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
 
@@ -153,3 +154,4 @@ export default function ChartDonut({ display, unit, from, to }) {
     </div>
   );
 }
+
