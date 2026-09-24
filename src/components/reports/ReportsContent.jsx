@@ -1,22 +1,25 @@
+
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useCurrency } from "@/context/currencyContext";
-import MonthSelector  from "@/components/reports/MonthSelector";
-import ChartDonut     from "@/components/reports/ChartDonut";
-import CategoryDonut  from "@/components/reports/CategoryDonut";
+import { useCard } from "@/context/cardContext";
+import MonthSelector from "@/components/reports/MonthSelector";
+import ChartDonut from "@/components/reports/ChartDonut";
+import CategoryDonut from "@/components/reports/CategoryDonut";
 import MonthlyComparison from "@/components/reports/MonthlyComparison";
 
 export default function ReportsContent() {
-  const router          = useRouter();
+  const router = useRouter();
   const { display, unit } = useCurrency();
+  const { activeCard } = useCard();
 
-  // بازه‌ی انتخاب‌شده توسط MonthSelector — به ChartDonut و CategoryDonut پاس می‌ره
   const [period, setPeriod] = useState({ isAll: true, label: "همه‌ی زمان‌ها" });
 
   const from = period.isAll ? undefined : period.from;
   const to   = period.isAll ? undefined : period.to;
+  const cardId = activeCard?._id ?? undefined;
 
   return (
     <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] p-4 sm:p-8 font-sans">
@@ -35,21 +38,22 @@ export default function ReportsContent() {
           <div />
         </div>
 
-        {/* فیلتر ماه — state رو بالا می‌بره */}
-        <MonthSelector
-          display={display}
-          unit={unit}
-          onPeriodChange={setPeriod}
-        />
+        {/* بنر کارت فعال */}
+        {activeCard && (
+          <div
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 mb-5 text-white text-sm font-semibold"
+            style={{ backgroundColor: activeCard.color }}
+          >
+            <span className="text-xl">{activeCard.icon}</span>
+            <span>گزارش‌های کارت «{activeCard.name}»</span>
+          </div>
+        )}
 
-        {/* نمودار توزیع مالی — از بازه انتخابی استفاده می‌کنه */}
-        <ChartDonut display={display} unit={unit} from={from} to={to} />
+        <MonthSelector display={display} unit={unit} onPeriodChange={setPeriod} cardId={cardId} />
 
-        {/* نمودار دسته‌بندی — از بازه انتخابی استفاده می‌کنه */}
-        <CategoryDonut display={display} unit={unit} from={from} to={to} />
-
-        {/* مقایسه ماهانه — همیشه نمایش داده می‌شه */}
-        <MonthlyComparison display={display} unit={unit} />
+        <ChartDonut    display={display} unit={unit} from={from} to={to} cardId={cardId} />
+        <CategoryDonut display={display} unit={unit} from={from} to={to} cardId={cardId} />
+        <MonthlyComparison display={display} unit={unit} cardId={cardId} />
       </div>
     </div>
   );
