@@ -60,13 +60,13 @@ export default function CardsPage() {
   const { cards, setCards, activeCard, setActiveCard, cardsLoading } = useCard();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [formLoading,  setFormLoading]  = useState(false);
-  const [name,         setName]         = useState('');
+  const [formLoading, setFormLoading] = useState(false);
+  const [name, setName] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('💳');
-  const [selectedColor,setSelectedColor]= useState(CARD_COLORS[0]);
-  const [description,  setDescription]  = useState('');
-  const [dialog,       setDialog]       = useState({ open: false });
-  const [toast,        setToast]        = useState({ visible: false, message: '', variant: 'success' });
+  const [selectedColor, setSelectedColor] = useState(CARD_COLORS[0]);
+  const [description, setDescription] = useState('');
+  const [dialog, setDialog] = useState({ open: false });
+  const [toast, setToast] = useState({ visible: false, message: '', variant: 'success' });
 
   const showToast = (message, variant = 'success') => {
     setToast({ visible: true, message, variant });
@@ -81,7 +81,7 @@ export default function CardsPage() {
         cancelText: options.cancelText,
         variant: options.variant || 'danger',
         onConfirm: () => { setDialog({ open: false }); resolve(true); },
-        onCancel:  () => { setDialog({ open: false }); resolve(false); },
+        onCancel: () => { setDialog({ open: false }); resolve(false); },
       });
     });
 
@@ -194,9 +194,12 @@ export default function CardsPage() {
         {cards.map((card) => {
           const isActive = activeCard?._id === card._id;
           return (
-            <button key={card._id}
-              onClick={() => setActiveCard(isActive ? null : card)} // context
-              className="mb-3 flex w-full items-center overflow-hidden rounded-2xl bg-white text-right transition-shadow hover:shadow-md"
+            <div key={card._id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveCard(isActive ? null : card)}
+              onKeyDown={(e) => e.key === 'Enter' && setActiveCard(isActive ? null : card)}
+              className="mb-3 flex w-full items-center overflow-hidden rounded-2xl bg-white text-right transition-shadow hover:shadow-md cursor-pointer"
               style={{
                 border: `2px solid ${isActive ? C.brand : 'transparent'}`,
                 boxShadow: isActive ? `0 0 0 3px ${C.brand}22` : '0 1px 4px rgba(0,0,0,0.06)',
@@ -223,7 +226,7 @@ export default function CardsPage() {
                   </button>
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
 
