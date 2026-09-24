@@ -6,6 +6,7 @@ import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import { useCurrency } from "@/context/currencyContext";
+import { useCard } from "@/context/cardContext";
 
 const TYPE_VARIANTS = [
   { key: "INCOME",      label: "درآمد" },
@@ -26,17 +27,16 @@ const unformatAmount = (value) => {
 };
 
 export default function TransactionModal({
-  isOpen,
-  onClose,
-  onRefreshData,
-  editingTransaction,
-  categories = [],
-  onCreateCategory,
-  categoryFormLoading = false,
+  isOpen, onClose, onRefreshData,
+  editingTransaction, categories = [],
+  onCreateCategory, categoryFormLoading = false,
 }) {
   const isEditMode = Boolean(editingTransaction);
   const { currency } = useCurrency();
   const unitLabel = currency === "IRT" ? "تومان" : "ریال";
+
+  // ── activeCard و cards از context ──
+  const { activeCard, cards: contextCards } = useCard();
 
   const [type,            setType]            = useState("EXPENSE");
   const [amount,          setAmount]          = useState("");
@@ -46,10 +46,7 @@ export default function TransactionModal({
   const [transactionDate, setTransactionDate] = useState("");
   const [category,        setCategory]        = useState(null);
   const [formLoading,     setFormLoading]     = useState(false);
-
-  // ── کارت‌ها ──────────────────────────────────────────────────────────────────
-  const [cards,          setCards]          = useState([]);
-  const [selectedCardId, setSelectedCardId] = useState(null);
+  const [selectedCardId,  setSelectedCardId]  = useState(null);
 
   const [showNewCat,  setShowNewCat]  = useState(false);
   const [newCatLabel, setNewCatLabel] = useState("");
@@ -65,23 +62,11 @@ export default function TransactionModal({
     if (!label) { setNewCatError("نام دسته‌بندی را وارد کنید"); return; }
     setNewCatError(null);
     const result = await onCreateCategory(label, newCatIcon.trim());
-    if (result.success) {
-      setCategory(result.category.id);
-      closeNewCat();
-    } else {
-      setNewCatError(result.message);
-    }
+    if (result.success) { setCategory(result.category.id); closeNewCat(); }
+    else setNewCatError(result.message);
   };
 
-  // ── دریافت کارت‌ها هنگام باز شدن مودال ────────────────────────────────────
-  useEffect(() => {
-    if (!isOpen) return;
-    api.get("/cards")
-      .then((res) => setCards(res.data.cards ?? res.data ?? []))
-      .catch(() => setCards([]));
-  }, [isOpen]);
-
-  // ── ریست / پر کردن فرم ──────────────────────────────────────────────────────
+  // ── ریست / پر کردن فرم ──
   useEffect(() => {
     if (!isOpen) return;
     if (editingTransaction) {
@@ -99,10 +84,12 @@ export default function TransactionModal({
     } else {
       setType("EXPENSE"); setAmount(""); setTitle("");
       setDescription(""); setDueDate(""); setTransactionDate("");
-      setCategory(null); setSelectedCardId(null);
+      setCategory(null);
+      // ── پیشفرض: کارت فعال ──
+      setSelectedCardId(activeCard?._id ?? null);
     }
     setShowNewCat(false);
-  }, [isOpen, editingTransaction]);
+  }, [isOpen, editingTransaction, activeCard]);
 
   if (!isOpen) return null;
 
@@ -127,8 +114,7 @@ export default function TransactionModal({
         description,
         category: type === "EXPENSE" ? category : undefined,
         dueDate: type === "INSTALLMENT" ? formattedDueDate : undefined,
-        // کارت — فقط اگه انتخاب شده باشه
-        ...(selectedCardId && { cardId: selectedCardId }),
+        cardId: selectedCardId ?? null, // ← همیشه بفرست (null یا id)
       };
 
       if (isEditMode) {
@@ -143,7 +129,6 @@ export default function TransactionModal({
       onClose();
       onRefreshData();
     } catch (error) {
-      console.error("Error saving transaction:", error);
       alert(error.response?.data?.message || "خطایی رخ داد");
     } finally {
       setFormLoading(false);
@@ -172,54 +157,34 @@ export default function TransactionModal({
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">نوع تراکنش</label>
             <div className="grid grid-cols-3 gap-2">
               {TYPE_VARIANTS.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  disabled={isEditMode}
+                <button key={item.key} type="button" disabled={isEditMode}
                   onClick={() => { setType(item.key); setCategory(null); setShowNewCat(false); }}
                   className={`py-2 text-[11px] font-semibold rounded-xl border transition-all ${
-                    type === item.key
-                      ? "bg-[#0F6F5C] text-white border-[#0F6F5C]"
-                      : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"
-                  } ${isEditMode ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
+                    type === item.key ? "bg-[#0F6F5C] text-white border-[#0F6F5C]" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#3A372F]"
+                  } ${isEditMode ? "opacity-50 cursor-not-allowed" : ""}`}>
                   {item.label}
                 </button>
               ))}
             </div>
             {isEditMode && (
-              <p className="text-[10px] text-[#8A8273] mt-1.5 text-right">
-                نوع تراکنش پس از ثبت قابل تغییر نیست.
-              </p>
+              <p className="text-[10px] text-[#8A8273] mt-1.5 text-right">نوع تراکنش پس از ثبت قابل تغییر نیست.</p>
             )}
           </div>
 
           {/* عنوان */}
           <div>
             <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">عنوان</label>
-            <input
-              type="text"
-              placeholder="مثال: حقوق، خرید، وام مسکن"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-right"
-            />
+            <input type="text" placeholder="مثال: حقوق، خرید، وام مسکن"
+              value={title} onChange={(e) => setTitle(e.target.value)}
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-right" />
           </div>
 
           {/* مبلغ */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-              مبلغ ({unitLabel})
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder={`مبلغ را به ${unitLabel} وارد کنید`}
-              value={amount}
-              onChange={handleAmountChange}
-              dir="ltr"
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider text-left"
-            />
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">مبلغ ({unitLabel})</label>
+            <input type="text" inputMode="numeric" placeholder={`مبلغ را به ${unitLabel} وارد کنید`}
+              value={amount} onChange={handleAmountChange} dir="ltr"
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider text-left" />
             <p className="text-[10px] text-[#8A8273] mt-1 text-right">
               {currency === "IRT" ? "مبلغ را به تومان وارد کنید" : "مبلغ را به ریال وارد کنید"}
             </p>
@@ -228,30 +193,18 @@ export default function TransactionModal({
           {/* تاریخ تراکنش */}
           {!isEditMode && (
             <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-                تاریخ تراکنش
-              </label>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">تاریخ تراکنش</label>
               <div className="flex flex-row-reverse gap-2 items-start">
-                <button
-                  type="button"
-                  onClick={() => setTransactionDate("")}
+                <button type="button" onClick={() => setTransactionDate("")}
                   className={`flex-shrink-0 px-4 py-2.5 rounded-xl border text-xs font-bold transition-colors ${
-                    !transactionDate
-                      ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                      : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
-                  }`}
-                >
+                    !transactionDate ? "bg-[#0F6F5C] border-[#0F6F5C] text-white" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
+                  }`}>
                   امروز
                 </button>
                 <div className="flex-1">
-                  <DatePicker
-                    calendar={persian}
-                    locale={persian_fa}
-                    value={transactionDate}
+                  <DatePicker calendar={persian} locale={persian_fa} value={transactionDate}
                     onChange={(d) => setTransactionDate(d?.isValid ? d.toDate() : "")}
-                    calendarPosition="bottom-right"
-                    placeholder="یا یک تاریخ دیگر انتخاب کن"
-                  />
+                    calendarPosition="bottom-right" placeholder="یا یک تاریخ دیگر انتخاب کن" />
                 </div>
               </div>
               <p className="text-[10px] text-[#8A8273] mt-1 text-right">
@@ -263,91 +216,51 @@ export default function TransactionModal({
           {/* دسته‌بندی */}
           {showCategorySection && (
             <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-                دسته‌بندی (اختیاری)
-              </label>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">دسته‌بندی (اختیاری)</label>
               <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {onCreateCategory && (
-                  <button
-                    type="button"
-                    onClick={() => (showNewCat ? closeNewCat() : openNewCat())}
+                  <button type="button" onClick={() => (showNewCat ? closeNewCat() : openNewCat())}
                     className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[11px] font-semibold border-2 border-dashed transition-colors ${
-                      showNewCat
-                        ? "border-[#0F6F5C] bg-[#0F6F5C]/10 text-[#0F6F5C]"
-                        : "border-[#0F6F5C] text-[#0F6F5C] hover:bg-[#0F6F5C]/5"
-                    }`}
-                  >
-                    <span>➕</span>
-                    <span>دسته‌بندی جدید</span>
+                      showNewCat ? "border-[#0F6F5C] bg-[#0F6F5C]/10 text-[#0F6F5C]" : "border-[#0F6F5C] text-[#0F6F5C] hover:bg-[#0F6F5C]/5"
+                    }`}>
+                    <span>➕</span><span>دسته‌بندی جدید</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setCategory(null)}
+                <button type="button" onClick={() => setCategory(null)}
                   className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full border text-[11px] font-semibold transition-colors ${
-                    category === null
-                      ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                      : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
-                  }`}
-                >
-                  <span>🚫</span>
-                  <span>بدون دسته</span>
+                    category === null ? "bg-[#0F6F5C] border-[#0F6F5C] text-white" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
+                  }`}>
+                  <span>🚫</span><span>بدون دسته</span>
                 </button>
                 {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setCategory(cat.id)}
+                  <button key={cat.id} type="button" onClick={() => setCategory(cat.id)}
                     className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full border text-[11px] font-semibold transition-colors ${
-                      category === cat.id
-                        ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                        : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
-                    }`}
-                  >
+                      category === cat.id ? "bg-[#0F6F5C] border-[#0F6F5C] text-white" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
+                    }`}>
                     {cat.icon && <span>{cat.icon}</span>}
                     <span>{cat.label}</span>
                   </button>
                 ))}
               </div>
-
               {showNewCat && (
                 <div className="mt-3 bg-[#FCFBF8] border border-[#E5E1D6] rounded-2xl p-4 space-y-3">
                   <div className="flex flex-row-reverse gap-2 items-center">
-                    <input
-                      type="text"
-                      placeholder="🙂"
-                      maxLength={4}
-                      value={newCatIcon}
+                    <input type="text" placeholder="🙂" maxLength={4} value={newCatIcon}
                       onChange={(e) => setNewCatIcon(e.target.value)}
-                      className="w-14 text-center text-lg bg-white border border-[#E5E1D6] rounded-xl py-2 outline-none focus:border-[#0F6F5C]"
-                    />
-                    <input
-                      type="text"
-                      placeholder="مثال: گازوئیل"
-                      maxLength={30}
-                      value={newCatLabel}
+                      className="w-14 text-center text-lg bg-white border border-[#E5E1D6] rounded-xl py-2 outline-none focus:border-[#0F6F5C]" />
+                    <input type="text" placeholder="مثال: گازوئیل" maxLength={30} value={newCatLabel}
                       onChange={(e) => setNewCatLabel(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), submitNewCat())}
-                      className="flex-1 text-sm text-right bg-white border border-[#E5E1D6] rounded-xl px-3 py-2.5 outline-none focus:border-[#0F6F5C]"
-                    />
+                      className="flex-1 text-sm text-right bg-white border border-[#E5E1D6] rounded-xl px-3 py-2.5 outline-none focus:border-[#0F6F5C]" />
                   </div>
-                  {newCatError && (
-                    <p className="text-[11px] text-red-500 text-right">{newCatError}</p>
-                  )}
+                  {newCatError && <p className="text-[11px] text-red-500 text-right">{newCatError}</p>}
                   <div className="flex flex-row-reverse gap-2">
-                    <button
-                      type="button"
-                      onClick={submitNewCat}
-                      disabled={categoryFormLoading}
-                      className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white text-xs font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5"
-                    >
+                    <button type="button" onClick={submitNewCat} disabled={categoryFormLoading}
+                      className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white text-xs font-bold rounded-xl py-2.5 flex items-center justify-center gap-1.5">
                       {categoryFormLoading ? <Loader2 size={13} className="animate-spin" /> : "افزودن"}
                     </button>
-                    <button
-                      type="button"
-                      onClick={closeNewCat}
-                      className="bg-white border border-[#E5E1D6] text-[#8A8273] text-xs font-semibold rounded-xl px-4 py-2.5"
-                    >
+                    <button type="button" onClick={closeNewCat}
+                      className="bg-white border border-[#E5E1D6] text-[#8A8273] text-xs font-semibold rounded-xl px-4 py-2.5">
                       انصراف
                     </button>
                   </div>
@@ -356,42 +269,27 @@ export default function TransactionModal({
             </div>
           )}
 
-          {/* ── انتخاب کارت — فقط اگه کارتی وجود داشته باشه ── */}
-          {cards.length > 0 && (
+          {/* انتخاب کارت */}
+          {contextCards.length > 0 && (
             <div>
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-                کارت (اختیاری)
-              </label>
+              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">کارت (اختیاری)</label>
               <div className="flex flex-row-reverse gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {/* بدون کارت */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedCardId(null)}
+                <button type="button" onClick={() => setSelectedCardId(null)}
                   className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full border text-[11px] font-semibold transition-colors ${
-                    selectedCardId === null
-                      ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                      : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
-                  }`}
-                >
-                  <span>🚫</span>
-                  <span>بدون کارت</span>
+                    selectedCardId === null ? "bg-[#0F6F5C] border-[#0F6F5C] text-white" : "bg-[#FCFBF8] border-[#E5E1D6] text-[#8A8273] hover:bg-[#EDE8DC]"
+                  }`}>
+                  <span>🚫</span><span>بدون کارت</span>
                 </button>
-
-                {/* کارت‌ها */}
-                {cards.map((card) => {
+                {contextCards.map((card) => {
                   const isSelected = selectedCardId === card._id;
                   return (
-                    <button
-                      key={card._id}
-                      type="button"
-                      onClick={() => setSelectedCardId(card._id)}
+                    <button key={card._id} type="button" onClick={() => setSelectedCardId(card._id)}
                       className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full border text-[11px] font-semibold transition-all"
                       style={{
                         backgroundColor: isSelected ? card.color : "#FCFBF8",
                         borderColor:     isSelected ? card.color : "#E5E1D6",
                         color:           isSelected ? "#fff"     : "#8A8273",
-                      }}
-                    >
+                      }}>
                       <span>{card.icon}</span>
                       <span>{card.name}</span>
                     </button>
@@ -404,49 +302,30 @@ export default function TransactionModal({
           {/* تاریخ سررسید */}
           {type === "INSTALLMENT" && (
             <div>
-              <label className="block text-xs font-medium text-amber-800 mb-1.5 text-right">
-                تاریخ سررسید (شمسی)
-              </label>
-              <DatePicker
-                calendar={persian}
-                locale={persian_fa}
-                value={dueDate}
+              <label className="block text-xs font-medium text-amber-800 mb-1.5 text-right">تاریخ سررسید (شمسی)</label>
+              <DatePicker calendar={persian} locale={persian_fa} value={dueDate}
                 onChange={(d) => setDueDate(d?.isValid ? d.toDate() : "")}
-                calendarPosition="bottom-right"
-                placeholder="انتخاب تاریخ سررسید"
-              />
+                calendarPosition="bottom-right" placeholder="انتخاب تاریخ سررسید" />
             </div>
           )}
 
           {/* توضیحات */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-              توضیحات (اختیاری)
-            </label>
-            <textarea
-              rows={2}
-              placeholder="توضیحات تکمیلی..."
-              value={description}
+            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">توضیحات (اختیاری)</label>
+            <textarea rows={2} placeholder="توضیحات تکمیلی..." value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-right resize-none"
-            />
+              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-right resize-none" />
           </div>
 
           {/* دکمه‌ها */}
           <div className="flex gap-2.5 pt-1">
-            <button
-              type="submit"
-              disabled={formLoading}
-              className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5"
-            >
+            <button type="submit" disabled={formLoading}
+              className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5">
               {formLoading && <Loader2 size={14} className="animate-spin" />}
               {isEditMode ? "بروزرسانی تراکنش" : "ذخیره تراکنش"}
             </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-[#F3F4F6] text-[#26241F] font-semibold rounded-xl px-4 py-2.5 text-xs"
-            >
+            <button type="button" onClick={onClose}
+              className="bg-[#F3F4F6] text-[#26241F] font-semibold rounded-xl px-4 py-2.5 text-xs">
               انصراف
             </button>
           </div>
