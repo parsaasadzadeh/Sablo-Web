@@ -36,25 +36,28 @@ function ChangeIndicator({ percent, positiveIsGood }) {
   );
 }
 
-export default function MonthlyComparison({ display, unit }) {
+export default function MonthlyComparison({ display, unit  , cardId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await api.get("/finance/monthly-comparison");
-        setData(res.data);
-      } catch {
-        setError("خطا در دریافت اطلاعات");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, []);
-
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {};
+      if (cardId) params.cardId = cardId;   // ← اضافه شد
+      const res = await api.get("/finance/monthly-comparison", { params });
+      setData(res.data);
+    } catch {
+      setError("خطا در دریافت اطلاعات");
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, [cardId]);
   if (loading) {
     return (
       <div className="bg-white rounded-2xl border border-[#EDE8DC] p-6 mb-6 flex items-center justify-center h-40">
@@ -118,3 +121,4 @@ export default function MonthlyComparison({ display, unit }) {
     </div>
   );
 }
+
