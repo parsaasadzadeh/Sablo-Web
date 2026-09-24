@@ -4,16 +4,23 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Plus, Loader2, Landmark } from "lucide-react";
 import api from "@/lib/axios";
 import { useCurrency } from "@/context/currencyContext";
+import { useCard } from "@/context/cardContext";
 import LoanCard from "./LoanCard";
 import CreateLoanModal from "./CreateLoanModal";
+import PayInstallmentModal from "@/components/dashboard/PayInstallmentModal";
 
 export default function LoansContent() {
   const router = useRouter();
   const { display, unit } = useCurrency();
+  const { cards } = useCard();
 
-  const [loans, setLoans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loans,       setLoans]       = useState([]);
+  const [loading,     setLoading]     = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ── state مودال پرداخت قسط ──
+  const [payModalVisible,      setPayModalVisible]      = useState(false);
+  const [pendingInstallmentId, setPendingInstallmentId] = useState(null);
 
   const fetchLoans = useCallback(async () => {
     try {
@@ -28,17 +35,32 @@ export default function LoansContent() {
 
   useEffect(() => { fetchLoans(); }, [fetchLoans]);
 
-  const handlePay = async (installmentId) => {
+  // ── کلیک روی "پرداخت قسط" → modal ──
+  const handlePay = useCallback((installmentId) => {
+    setPendingInstallmentId(installmentId);
+    setPayModalVisible(true);
+  }, []);
+
+  // ── تأیید پرداخت با cardId ──
+  const handleConfirmPay = useCallback(async (cardId) => {
+    setPayModalVisible(false);
+    if (!pendingInstallmentId) return;
     try {
-      await api.put(`/finance/pay-installment/${installmentId}`, {});
+      await api.put(`/finance/pay-installment/${pendingInstallmentId}`, {
+        cardId: cardId ?? null,
+      });
       fetchLoans();
     } catch (err) {
       alert(err.response?.data?.message || "خطا در پرداخت قسط");
+    } finally {
+      setPendingInstallmentId(null);
     }
-  };
+  }, [pendingInstallmentId, fetchLoans]);
 
   const handleDelete = async (loan) => {
-    if (!window.confirm(`آیا مطمئنید می‌خواهید وام «${loan.title}» را حذف کنید؟\nتمام اقساط مرتبط هم حذف خواهند شد.`)) return;
+    if (!window.confirm(
+      `آیا مطمئنید می‌خواهید وام «${loan.title}» را حذف کنید؟\nتمام اقساط مرتبط هم حذف خواهند شد.`
+    )) return;
     try {
       await api.delete(`/finance/delete/${loan._id}`);
       fetchLoans();
@@ -47,8 +69,8 @@ export default function LoansContent() {
     }
   };
 
-  const totalDebt = loans.reduce((s, l) => s + l.remainingAmount, 0);
-  const totalPaid = loans.reduce((s, l) => s + l.paidAmount, 0);
+  const totalDebt  = loans.reduce((s, l) => s + l.remainingAmount, 0);
+  const totalPaid  = loans.reduce((s, l) => s + l.paidAmount, 0);
   const activeLoans = loans.filter(l => !l.isFullyPaid).length;
 
   return (
@@ -64,27 +86,14 @@ export default function LoansContent() {
 
         {/* هدر */}
         <div className="flex items-center mb-5">
-          {/* بازگشت — سمت راست در RTL */}
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors"
-          >
-            <ArrowRight size={15} />
-            بازگشت
+          <button onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors">
+            <ArrowRight size={15} /> بازگشت
           </button>
-
-          {/* عنوان — وسط */}
-          <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">
-            وام‌های من
-          </h1>
-
-          {/* وام جدید — سمت چپ در RTL */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
-          >
-            <Plus size={14} />
-            وام جدید
+          <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">وام‌های من</h1>
+          <button onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors">
+            <Plus size={14} /> وام جدید
           </button>
         </div>
 
@@ -94,21 +103,15 @@ export default function LoansContent() {
             <div className="flex gap-3">
               <div className="flex-1 text-center">
                 <p className="text-[11px] text-[#8A8273] mb-1">بدهی باقیمانده</p>
-                <p className="text-sm font-extrabold text-rose-500">
-                  {display(totalDebt)} {unit}
-                </p>
+                <p className="text-sm font-extrabold text-rose-500">{display(totalDebt)} {unit}</p>
               </div>
               <div className="flex-1 text-center">
                 <p className="text-[11px] text-[#8A8273] mb-1">پرداخت شده</p>
-                <p className="text-sm font-extrabold text-emerald-600">
-                  {display(totalPaid)} {unit}
-                </p>
+                <p className="text-sm font-extrabold text-emerald-600">{display(totalPaid)} {unit}</p>
               </div>
               <div className="flex-1 text-center">
                 <p className="text-[11px] text-[#8A8273] mb-1">وام فعال</p>
-                <p className="text-sm font-extrabold text-[#0F6F5C]">
-                  {activeLoans} وام
-                </p>
+                <p className="text-sm font-extrabold text-[#0F6F5C]">{activeLoans} وام</p>
               </div>
             </div>
           </div>
@@ -130,37 +133,26 @@ export default function LoansContent() {
                 وام‌های بانکی رو اینجا ثبت کن تا اقساطشون خودکار مدیریت بشه
               </p>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[#0F6F5C] text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors"
-            >
+            <button onClick={() => setIsModalOpen(true)}
+              className="bg-[#0F6F5C] text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors">
               ثبت اولین وام
             </button>
           </div>
         ) : (
           <>
             {loans.filter(l => !l.isFullyPaid).map(loan => (
-              <LoanCard
-                key={loan._id}
-                loan={loan}
-                display={display}
-                unit={unit}
+              <LoanCard key={loan._id} loan={loan}
+                display={display} unit={unit}
                 onPay={handlePay}
                 onDelete={handleDelete}
               />
             ))}
-
             {loans.filter(l => l.isFullyPaid).length > 0 && (
               <>
-                <p className="text-xs font-bold text-[#8A8273] text-right mb-3 mt-2">
-                  تسویه‌شده‌ها
-                </p>
+                <p className="text-xs font-bold text-[#8A8273] text-right mb-3 mt-2">تسویه‌شده‌ها</p>
                 {loans.filter(l => l.isFullyPaid).map(loan => (
-                  <LoanCard
-                    key={loan._id}
-                    loan={loan}
-                    display={display}
-                    unit={unit}
+                  <LoanCard key={loan._id} loan={loan}
+                    display={display} unit={unit}
                     onPay={handlePay}
                     onDelete={handleDelete}
                   />
@@ -175,6 +167,17 @@ export default function LoansContent() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreated={() => { setLoading(true); fetchLoans(); }}
+      />
+
+      {/* ── مودال پرداخت قسط با انتخاب کارت ── */}
+      <PayInstallmentModal
+        visible={payModalVisible}
+        onClose={() => {
+          setPayModalVisible(false);
+          setPendingInstallmentId(null);
+        }}
+        onConfirm={handleConfirmPay}
+        cards={cards}
       />
     </div>
   );
