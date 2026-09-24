@@ -4,7 +4,7 @@ import RegisterSW from './register-sw';
 
 import { CardProvider } from "@/context/cardContext";
 export const metadata = {
-  metadataBase: new URL('https://sablo.app'), // دامنه واقعی‌تو بذار
+  metadataBase: new URL('https://sablo.ir'), // دامنه واقعی‌تو بذار
   title: {
     default: "Sablo | اپلیکیشن مدیریت مالی",
     template: "%s | Sablo",
