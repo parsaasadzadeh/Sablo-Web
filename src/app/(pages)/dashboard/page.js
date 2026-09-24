@@ -4,39 +4,44 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import { CurrencyProvider } from "@/context/currencyContext";
-import { useCard } from "@/context/cardContext"; // فقط useCard — نه CardProvider
-import DashboardHeader  from "@/components/dashboard/DashboardHeader";
-import StatsGrid        from "@/components/dashboard/StatsGrid";
-import TransactionList  from "@/components/dashboard/TransactionList";
-import TransactionModal from "@/components/dashboard/TransactionModal";
-import AiAnalysisCard   from "@/components/dashboard/AiAnalysisCard";
-import CurrencyToggle   from "@/components/dashboard/CurrencyToggle";
-import QuickNav         from "@/components/dashboard/QuickNav";
-import ActiveCardBanner from "@/components/dashboard/ActiveCardBanner";
+import { useCard } from "@/context/cardContext";
+import DashboardHeader    from "@/components/dashboard/DashboardHeader";
+import StatsGrid          from "@/components/dashboard/StatsGrid";
+import TransactionList    from "@/components/dashboard/TransactionList";
+import TransactionModal   from "@/components/dashboard/TransactionModal";
+import AiAnalysisCard     from "@/components/dashboard/AiAnalysisCard";
+import CurrencyToggle     from "@/components/dashboard/CurrencyToggle";
+import QuickNav           from "@/components/dashboard/QuickNav";
+import ActiveCardBanner   from "@/components/dashboard/ActiveCardBanner";
+import PayInstallmentModal from "@/components/dashboard/PayInstallmentModal";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { activeCard } = useCard(); // از layout's CardProvider
+  const { activeCard, cards } = useCard();
 
-  const [loading,            setLoading]            = useState(true);
-  const [isModalOpen,        setIsModalOpen]        = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState(null);
-  const [currentPage,        setCurrentPage]        = useState(1);
-  const [totalPages,         setTotalPages]         = useState(1);
-  const [categories,         setCategories]         = useState([]);
-  const [catLoading,         setCatLoading]         = useState(false);
-  const [initialCurrency,    setInitialCurrency]    = useState("IRT");
-  const [notifications,      setNotifications]      = useState([]);
-  const [unreadCount,        setUnreadCount]        = useState(0);
-  const [stats, setStats] = useState({
+  const [loading,              setLoading]              = useState(true);
+  const [isModalOpen,          setIsModalOpen]          = useState(false);
+  const [editingTransaction,   setEditingTransaction]   = useState(null);
+  const [currentPage,          setCurrentPage]          = useState(1);
+  const [totalPages,           setTotalPages]           = useState(1);
+  const [categories,           setCategories]           = useState([]);
+  const [catLoading,           setCatLoading]           = useState(false);
+  const [initialCurrency,      setInitialCurrency]      = useState("IRT");
+  const [notifications,        setNotifications]        = useState([]);
+  const [unreadCount,          setUnreadCount]          = useState(0);
+  const [transactions,         setTransactions]         = useState([]);
+  const [stats,                setStats]                = useState({
     summary: {
       cashBalance: 0, totalIncome: 0, totalExpense: 0,
       activeDebt: 0, unpaidInstallmentsCount: 0, unpaidInstallmentsAmount: 0,
     },
-    expenseCategories: [],
   });
-  const [transactions, setTransactions] = useState([]);
 
+  // ── state مودال پرداخت قسط ──
+  const [payModalVisible,      setPayModalVisible]      = useState(false);
+  const [pendingInstallmentId, setPendingInstallmentId] = useState(null);
+
+  // ── fetch داده‌ها ──
   const fetchFinanceData = useCallback(async (page) => {
     try {
       const token = localStorage.getItem("token");
@@ -72,7 +77,6 @@ export default function DashboardPage() {
     }
   }, [router, activeCard]);
 
-  // هر بار activeCard عوض شد → صفحه ۱ و fetch مجدد
   useEffect(() => {
     setCurrentPage(1);
     fetchFinanceData(1);
@@ -111,12 +115,27 @@ export default function DashboardPage() {
     } catch {}
   };
 
-  const handlePayInstallment = async (id) => {
+  // ── کلیک روی دکمه پرداخت → modal رو نشون بده ──
+  const handlePayInstallment = useCallback((id) => {
+    setPendingInstallmentId(id);
+    setPayModalVisible(true);
+  }, []);
+
+  // ── تأیید پرداخت با cardId (یا null) ──
+  const handleConfirmPay = useCallback(async (cardId) => {
+    setPayModalVisible(false);
+    if (!pendingInstallmentId) return;
     try {
-      await api.put(`/finance/pay-installment/${id}`, {});
+      await api.put(`/finance/pay-installment/${pendingInstallmentId}`, {
+        cardId: cardId ?? null,
+      });
       fetchFinanceData(currentPage);
-    } catch { alert("خطا در پرداخت قسط"); }
-  };
+    } catch {
+      alert("خطا در پرداخت قسط");
+    } finally {
+      setPendingInstallmentId(null);
+    }
+  }, [pendingInstallmentId, currentPage, fetchFinanceData]);
 
   const handleDeleteTransaction = async (tx) => {
     const msg = tx.type === "LOAN"
@@ -146,6 +165,7 @@ export default function DashboardPage() {
           @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
           .font-sans { font-family: 'Vazirmatn', sans-serif; }
         `}</style>
+
         <div className="max-w-5xl mx-auto">
           <DashboardHeader
             notifications={notifications} unreadCount={unreadCount}
@@ -168,6 +188,7 @@ export default function DashboardPage() {
             onDeleteTransaction={handleDeleteTransaction}
           />
         </div>
+
         <TransactionModal
           isOpen={isModalOpen}
           onClose={() => { setIsModalOpen(false); setEditingTransaction(null); }}
@@ -176,6 +197,17 @@ export default function DashboardPage() {
           categories={categories}
           onCreateCategory={handleCreateCategory}
           categoryFormLoading={catLoading}
+        />
+
+        {/* ── مودال پرداخت قسط ── */}
+        <PayInstallmentModal
+          visible={payModalVisible}
+          onClose={() => {
+            setPayModalVisible(false);
+            setPendingInstallmentId(null);
+          }}
+          onConfirm={handleConfirmPay}
+          cards={cards}
         />
       </div>
     </CurrencyProvider>
