@@ -61,7 +61,7 @@ function buildMonthPeriod(jy, jm) {
   return { isAll: false, jy, jm, from, to, label: `${MONTHS[jm - 1]} ${jy}` };
 }
 
-export default function MonthSelector({ display, unit, onPeriodChange }) {
+export default function MonthSelector({ display, unit, onPeriodChange  , cardId  }) {
   const todayG = new Date();
   const todayJ = toJalali(todayG.getFullYear(), todayG.getMonth() + 1, todayG.getDate());
 
@@ -72,21 +72,22 @@ export default function MonthSelector({ display, unit, onPeriodChange }) {
   const [loading, setLoading] = useState(false);
 
   const fetchSummary = useCallback(async (period) => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (!period.isAll && period.from && period.to) {
-        params.from = period.from;
-        params.to   = period.to;
-      }
-      const res = await api.get("/finance/stats", { params });
-      setSummary(res.data.summary ?? null);
-    } catch {
-      setSummary(null);
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const params = {};
+    if (!period.isAll && period.from && period.to) {
+      params.from = period.from;
+      params.to   = period.to;
     }
-  }, []);
+    if (cardId) params.cardId = cardId;   // ← اضافه شد
+    const res = await api.get("/finance/stats", { params });
+    setSummary(res.data.summary ?? null);
+  } catch {
+    setSummary(null);
+  } finally {
+    setLoading(false);
+  }
+}, [cardId]); 
 
   useEffect(() => {
     const period = mode === "all" ? buildAllPeriod() : buildMonthPeriod(jy, jm);
