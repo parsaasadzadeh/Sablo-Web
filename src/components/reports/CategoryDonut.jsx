@@ -28,27 +28,28 @@ function buildArcPath(cx, cy, outerR, innerR, startAngle, endAngle) {
   ].join(" ");
 }
 
-export default function CategoryDonut({ display, unit, from, to }) {
+export default function CategoryDonut({ display, unit, from, to , cardId }) {
   const [activeType,  setActiveType]  = useState("EXPENSE");
   const [activeSlice, setActiveSlice] = useState(null);
   const [rawData,     setRawData]     = useState([]);
   const [loading,     setLoading]     = useState(true);
 
-  const fetchStats = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = { type: activeType };
-      if (from) params.from = from;
-      if (to)   params.to   = to;
-      const res = await api.get("/finance/category-stats", { params });
-      setRawData(res.data.categories ?? []);
-      setActiveSlice(null);
-    } catch {
-      setRawData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeType, from, to]);
+ const fetchStats = useCallback(async () => {
+  setLoading(true);
+  try {
+    const params = { type: activeType };
+    if (from)   params.from   = from;
+    if (to)     params.to     = to;
+    if (cardId) params.cardId = cardId;   // ← اضافه شد
+    const res = await api.get("/finance/category-stats", { params });
+    setRawData(res.data.categories ?? []);
+    setActiveSlice(null);
+  } catch {
+    setRawData([]);
+  } finally {
+    setLoading(false);
+  }
+}, [activeType, from, to, cardId]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
@@ -189,3 +190,4 @@ export default function CategoryDonut({ display, unit, from, to }) {
     </div>
   );
 }
+
