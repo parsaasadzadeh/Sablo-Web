@@ -42,32 +42,34 @@ export default function AiAnalysisCard() {
 
   if (loadingStatus) {
     return (
-      <div className="bg-white p-5 rounded-2xl border border-[#EDE8DC] mb-6 flex items-center justify-center h-24">
-        <Loader2 className="animate-spin text-[#0F6F5C]" size={22} />
+      <div className="bg-[var(--card)] p-5 rounded-2xl border border-[color:var(--border)] mb-6 flex items-center justify-center h-24">
+        <Loader2 className="animate-spin text-[color:var(--brand)]" size={22} />
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-[#EDE8DC] mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-[#0F6F5C]/10 rounded-xl">
-            <Sparkles size={18} className="text-[#0F6F5C]" />
+    <div className="bg-[var(--card)] p-5 rounded-2xl border border-[color:var(--border)] mb-6">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="p-2 bg-[var(--brand-light)] rounded-xl shrink-0">
+            <Sparkles size={18} className="text-[color:var(--brand)]" />
           </div>
-          <div>
-            <h2 className="text-sm font-bold text-[#26241F]">تحلیل هوشمند وضعیت مالی</h2>
-            <p className="text-[11px] text-[#8A8273]">هر کاربر روزی یک‌بار می‌تواند از این قابلیت استفاده کند</p>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-[color:var(--ink)]">تحلیل هوشمند وضعیت مالی</h2>
+            <p className="text-[11px] text-[color:var(--muted)]">
+              هر کاربر روزی یک‌بار می‌تواند از این قابلیت استفاده کند
+            </p>
           </div>
         </div>
 
         <button
           onClick={handleAnalyze}
           disabled={analyzing || usedToday}
-          className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors ${
+          className={`shrink-0 flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl transition-colors ${
             usedToday
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : "bg-[#0F6F5C] text-white hover:bg-[#0c5c4b]"
+              ? "bg-[var(--border)] text-[color:var(--muted)] cursor-not-allowed"
+              : "bg-[var(--brand)] text-white hover:bg-[var(--brand-dark)]"
           }`}
         >
           {analyzing ? (
@@ -85,17 +87,21 @@ export default function AiAnalysisCard() {
       </div>
 
       {error && (
-        <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl mt-2">{error}</p>
+        <p className="text-xs text-[color:var(--danger)] bg-[var(--danger-light)] border border-[color:var(--danger-border)] p-3 rounded-xl mt-2">
+          {error}
+        </p>
       )}
 
       {result && !error && (
-        <div className="mt-2 bg-[#F7F4EE] p-4 rounded-xl">
-          <p className="text-xs leading-relaxed text-[#26241F] whitespace-pre-line">{result}</p>
+        <div className="mt-2 bg-[var(--bg)] border border-[color:var(--border)] p-4 rounded-xl">
+          <p className="text-xs leading-relaxed text-[color:var(--ink)] whitespace-pre-line">{result}</p>
         </div>
       )}
 
       {!result && !error && !analyzing && (
-        <p className="text-xs text-[#8A8273] mt-2">برای دریافت تحلیل هوش مصنوعی از وضعیت مالی‌تان، روی دکمه «بررسی» کلیک کنید.</p>
+        <p className="text-xs text-[color:var(--muted)] mt-2">
+          برای دریافت تحلیل هوش مصنوعی از وضعیت مالی‌تان، روی دکمه «بررسی» کلیک کنید.
+        </p>
       )}
     </div>
   );
