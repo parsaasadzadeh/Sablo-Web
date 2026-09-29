@@ -13,33 +13,29 @@ import AiAnalysisCard     from "@/components/dashboard/AiAnalysisCard";
 import CurrencyToggle     from "@/components/dashboard/CurrencyToggle";
 import QuickNav           from "@/components/dashboard/QuickNav";
 import ActiveCardBanner   from "@/components/dashboard/ActiveCardBanner";
-import PayInstallmentModal from "@/components/dashboard/PayInstallmentModal";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { activeCard, cards } = useCard();
+  const { activeCard } = useCard();
 
-  const [loading,              setLoading]              = useState(true);
-  const [isModalOpen,          setIsModalOpen]          = useState(false);
-  const [editingTransaction,   setEditingTransaction]   = useState(null);
-  const [currentPage,          setCurrentPage]          = useState(1);
-  const [totalPages,           setTotalPages]           = useState(1);
-  const [categories,           setCategories]           = useState([]);
-  const [catLoading,           setCatLoading]           = useState(false);
-  const [initialCurrency,      setInitialCurrency]      = useState("IRT");
-  const [notifications,        setNotifications]        = useState([]);
-  const [unreadCount,          setUnreadCount]          = useState(0);
-  const [transactions,         setTransactions]         = useState([]);
-  const [stats,                setStats]                = useState({
+  const [loading,            setLoading]            = useState(true);
+  const [isModalOpen,        setIsModalOpen]        = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [currentPage,        setCurrentPage]        = useState(1);
+  const [totalPages,         setTotalPages]         = useState(1);
+  const [categories,         setCategories]         = useState([]);
+  const [catLoading,         setCatLoading]         = useState(false);
+  const [initialCurrency,    setInitialCurrency]    = useState("IRT");
+  const [notifications,      setNotifications]      = useState([]);
+  const [unreadCount,        setUnreadCount]        = useState(0);
+  const [transactions,       setTransactions]       = useState([]);
+  const [user,               setUser]               = useState(null);
+  const [stats,              setStats]              = useState({
     summary: {
       cashBalance: 0, totalIncome: 0, totalExpense: 0,
       activeDebt: 0, unpaidInstallmentsCount: 0, unpaidInstallmentsAmount: 0,
     },
   });
-
-  // ── state مودال پرداخت قسط ──
-  const [payModalVisible,      setPayModalVisible]      = useState(false);
-  const [pendingInstallmentId, setPendingInstallmentId] = useState(null);
 
   // ── fetch داده‌ها ──
   const fetchFinanceData = useCallback(async (page) => {
@@ -65,6 +61,7 @@ export default function DashboardPage() {
       setTotalPages(listRes.data.totalPages);
       setNotifications(notifRes.data.notifications);
       setUnreadCount(notifRes.data.unreadCount);
+      setUser(meRes.data.user);
       setInitialCurrency(meRes.data.user.currency ?? "IRT");
       setCategories(categoriesRes.data.categories ?? categoriesRes.data ?? []);
     } catch (error) {
@@ -115,27 +112,17 @@ export default function DashboardPage() {
     } catch {}
   };
 
-  // ── کلیک روی دکمه پرداخت → modal رو نشون بده ──
-  const handlePayInstallment = useCallback((id) => {
-    setPendingInstallmentId(id);
-    setPayModalVisible(true);
-  }, []);
-
-  // ── تأیید پرداخت با cardId (یا null) ──
-  const handleConfirmPay = useCallback(async (cardId) => {
-    setPayModalVisible(false);
-    if (!pendingInstallmentId) return;
+  // ── پرداخت قسط ──
+  // انتخاب کارت داخل TransactionList انجام می‌شود (مودال خودش را دارد)،
+  // پس اینجا مستقیم با (id, cardId) پرداخت می‌کنیم. قبلاً یک مودال دوم هم اینجا باز می‌شد.
+  const handlePayInstallment = useCallback(async (id, cardId) => {
     try {
-      await api.put(`/finance/pay-installment/${pendingInstallmentId}`, {
-        cardId: cardId ?? null,
-      });
+      await api.put(`/finance/pay-installment/${id}`, { cardId: cardId ?? null });
       fetchFinanceData(currentPage);
-    } catch {
-      alert("خطا در پرداخت قسط");
-    } finally {
-      setPendingInstallmentId(null);
+    } catch (err) {
+      alert(err.response?.data?.message || "خطا در پرداخت قسط");
     }
-  }, [pendingInstallmentId, currentPage, fetchFinanceData]);
+  }, [currentPage, fetchFinanceData]);
 
   const handleDeleteTransaction = async (tx) => {
     const msg = tx.type === "LOAN"
@@ -148,19 +135,17 @@ export default function DashboardPage() {
     } catch (err) { alert(err.response?.data?.message || "خطا در حذف"); }
   };
 
-  const handleLogout = () => { localStorage.removeItem("token"); router.push("/"); };
-
   if (loading && transactions.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F7F4EE] flex items-center justify-center">
-        <Loader2 className="animate-spin text-[#0F6F5C]" size={40} />
+      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
+        <Loader2 className="animate-spin text-[color:var(--brand)]" size={40} />
       </div>
     );
   }
 
   return (
     <CurrencyProvider initialCurrency={initialCurrency}>
-      <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] p-4 sm:p-8 font-sans">
+      <div dir="rtl" lang="fa" className="min-h-screen bg-[var(--bg)] text-[color:var(--ink)] p-4 sm:p-8 font-sans">
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
           .font-sans { font-family: 'Vazirmatn', sans-serif; }
@@ -168,8 +153,11 @@ export default function DashboardPage() {
 
         <div className="max-w-5xl mx-auto">
           <DashboardHeader
-            notifications={notifications} unreadCount={unreadCount}
-            onMarkAsRead={handleMarkAsRead} onLogout={handleLogout}
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkAsRead={handleMarkAsRead}
+            userName={user?.name}
+            userPhone={user?.phone}
           />
           <AiAnalysisCard />
           <QuickNav />
@@ -197,17 +185,6 @@ export default function DashboardPage() {
           categories={categories}
           onCreateCategory={handleCreateCategory}
           categoryFormLoading={catLoading}
-        />
-
-        {/* ── مودال پرداخت قسط ── */}
-        <PayInstallmentModal
-          visible={payModalVisible}
-          onClose={() => {
-            setPayModalVisible(false);
-            setPendingInstallmentId(null);
-          }}
-          onConfirm={handleConfirmPay}
-          cards={cards}
         />
       </div>
     </CurrencyProvider>
