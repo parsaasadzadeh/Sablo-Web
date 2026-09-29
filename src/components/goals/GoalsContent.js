@@ -10,6 +10,7 @@ import "react-multi-date-picker/styles/backgrounds/bg-dark.css";
 import { useCurrency } from "@/context/currencyContext";
 import { useTheme } from "@/context/themeContext";
 import GoalCard from "@/components/reports/GoalCard";
+import DepositGoalModal from "@/components/reports/DepositGoalModal";
 
 const LABEL = "block text-xs font-medium text-[color:var(--ink-light)] mb-1.5 text-right";
 const INPUT =
@@ -27,6 +28,7 @@ export default function GoalsContent() {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [depositGoal, setDepositGoal] = useState(null); // هدفی که مودال واریز برایش باز است
 
   const fetchGoals = async () => {
     try {
@@ -39,7 +41,7 @@ export default function GoalsContent() {
     }
   };
 
-  useEffect(() => { fetchGoals(); }, []);
+  useEffect(() => { fetchGoals(); }, []); // eslint-disable-line
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,6 +75,14 @@ export default function GoalsContent() {
     } catch {
       alert("خطا در حذف هدف");
     }
+  };
+
+  // ── واریز به هدف (از کارت یا بدون کارت) ──
+  // ⚠️ مسیر و بدنه‌ی درخواست را با API بک‌اند / نسخه‌ی موبایل خودتان هماهنگ کنید
+  const handleDeposit = async ({ amount, cardId }) => {
+    await api.post(`/goals/${depositGoal._id}/deposit`, { amount, cardId });
+    setDepositGoal(null);
+    fetchGoals();
   };
 
   if (loading) {
@@ -188,10 +198,23 @@ export default function GoalsContent() {
           </div>
         ) : (
           goals.map((goal) => (
-            <GoalCard key={goal._id} goal={goal} display={display} unit={unit} onDelete={handleDelete} />
+            <GoalCard
+              key={goal._id}
+              goal={goal}
+              display={display}
+              unit={unit}
+              onDelete={handleDelete}
+              onDeposit={setDepositGoal}
+            />
           ))
         )}
       </div>
+
+      <DepositGoalModal
+        goal={depositGoal}
+        onClose={() => setDepositGoal(null)}
+        onConfirm={handleDeposit}
+      />
     </div>
   );
 }
