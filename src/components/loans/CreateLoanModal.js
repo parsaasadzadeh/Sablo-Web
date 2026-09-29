@@ -4,7 +4,9 @@ import { Loader2 } from "lucide-react";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
+import "react-multi-date-picker/styles/backgrounds/bg-dark.css";
 import { useCurrency } from "@/context/currencyContext";
+import { useTheme } from "@/context/themeContext";
 import api from "@/lib/axios";
 
 const formatAmount = (value) => {
@@ -19,8 +21,14 @@ const unformatAmount = (value) => {
   return digitsOnly ? Number(digitsOnly) : 0;
 };
 
+const LABEL = "block text-xs font-medium text-[color:var(--ink-light)] mb-1.5 text-right";
+const HINT = "text-[10px] text-[color:var(--muted)] text-right";
+const INPUT =
+  "w-full text-sm bg-[var(--input-bg)] border border-[color:var(--input-border)] rounded-xl px-3.5 py-2.5 outline-none focus:border-[color:var(--brand)] text-[color:var(--ink)] placeholder:text-[color:var(--muted-light)]";
+
 export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
   const { currency } = useCurrency();
+  const { mode } = useTheme();
   const unitLabel = currency === "IRT" ? "تومان" : "ریال";
 
   const [title,             setTitle]             = useState("");
@@ -99,16 +107,17 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50">
+    <div className="fixed inset-0 bg-[var(--overlay)] backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50">
       <style>{`
-        .rmdp-input { width: 100% !important; height: 42px !important; border-radius: 0.75rem !important; background-color: #FCFBF8 !important; border-color: #E5E1D6 !important; font-size: 0.875rem !important; padding: 0.625rem 0.875rem !important; outline: none !important; }
-        .rmdp-input:focus { border-color: #0F6F5C !important; }
+        .rmdp-input { width: 100% !important; height: 42px !important; border-radius: 0.75rem !important; background-color: var(--input-bg) !important; color: var(--ink) !important; border: 1px solid var(--input-border) !important; font-size: 0.875rem !important; padding: 0.625rem 0.875rem !important; outline: none !important; }
+        .rmdp-input:focus { border-color: var(--brand) !important; box-shadow: none !important; }
+        .rmdp-input::placeholder { color: var(--muted-light); }
       `}</style>
 
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 border border-[#EDE8DC] shadow-xl max-h-[92vh] overflow-y-auto">
-        <div className="w-10 h-1 bg-[#EDE8DC] rounded-full mx-auto mb-4 sm:hidden" />
-        <h3 className="text-base font-bold text-[#26241F] mb-1 text-right">ثبت وام جدید</h3>
-        <p className="text-xs text-[#8A8273] text-right mb-4">
+      <div className="bg-[var(--card)] rounded-t-2xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 border border-[color:var(--border)] shadow-xl max-h-[92vh] overflow-y-auto">
+        <div className="w-10 h-1 bg-[var(--border)] rounded-full mx-auto mb-4 sm:hidden" />
+        <h3 className="text-base font-bold text-[color:var(--ink)] mb-1 text-right">ثبت وام جدید</h3>
+        <p className="text-xs text-[color:var(--muted)] text-right mb-4">
           اقساط به صورت خودکار ساخته می‌شوند
         </p>
 
@@ -116,23 +125,19 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
 
           {/* نام وام */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-              نام وام
-            </label>
+            <label className={LABEL}>نام وام</label>
             <input
               type="text"
               placeholder="مثال: وام بانک ملت، وام مسکن"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-right"
+              className={`${INPUT} text-right`}
             />
           </div>
 
           {/* مبلغ کل */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-              مبلغ کل وام ({unitLabel})
-            </label>
+            <label className={LABEL}>مبلغ کل وام ({unitLabel})</label>
             <input
               type="text"
               inputMode="numeric"
@@ -140,16 +145,14 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
               value={totalAmount}
               onChange={handleTotalChange}
               dir="ltr"
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] tracking-wider text-left"
+              className={`${INPUT} tracking-wider text-left`}
             />
           </div>
 
-          {/* تعداد اقساط و مبلغ هر قسط — کنار هم */}
+          {/* تعداد اقساط و مبلغ هر قسط */}
           <div className="flex flex-row-reverse gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-                تعداد اقساط
-              </label>
+              <label className={LABEL}>تعداد اقساط</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -157,13 +160,11 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
                 value={installmentCount}
                 onChange={handleCountChange}
                 dir="ltr"
-                className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-left"
+                className={`${INPUT} text-left`}
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-                مبلغ هر قسط ({unitLabel})
-              </label>
+              <label className={LABEL}>مبلغ هر قسط ({unitLabel})</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -171,21 +172,20 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
                 value={installmentAmount}
                 onChange={(e) => setInstallmentAmount(formatAmount(e.target.value))}
                 dir="ltr"
-                className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-left"
+                className={`${INPUT} text-left`}
               />
             </div>
           </div>
 
-          <p className="text-[10px] text-[#8A8273] text-right -mt-2">
+          <p className={`${HINT} -mt-2`}>
             مبلغ هر قسط با وارد کردن مبلغ کل و تعداد، خودکار محاسبه میشه — می‌تونی دستی هم تغییرش بدی
           </p>
 
           {/* تاریخ اولین قسط */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-              تاریخ اولین قسط (شمسی)
-            </label>
+            <label className={LABEL}>تاریخ اولین قسط (شمسی)</label>
             <DatePicker
+              className={mode === "dark" ? "bg-dark" : ""}
               calendar={persian}
               locale={persian_fa}
               value={firstDueDate}
@@ -193,29 +193,25 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
               calendarPosition="bottom-right"
               placeholder="انتخاب تاریخ"
             />
-            <p className="text-[10px] text-[#8A8273] mt-1 text-right">
-              بقیه اقساط هر ماه یه بار از این تاریخ جلو میرن
-            </p>
+            <p className={`${HINT} mt-1`}>بقیه اقساط هر ماه یه بار از این تاریخ جلو میرن</p>
           </div>
 
           {/* توضیحات */}
           <div>
-            <label className="block text-xs font-medium text-[#3A372F] mb-1.5 text-right">
-              توضیحات (اختیاری)
-            </label>
+            <label className={LABEL}>توضیحات (اختیاری)</label>
             <textarea
               rows={2}
               placeholder="مثال: وام ۳۶ ماهه بانک ملت شعبه مرکزی"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full text-sm bg-[#FCFBF8] border border-[#E5E1D6] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0F6F5C] text-right resize-none"
+              className={`${INPUT} text-right resize-none`}
             />
           </div>
 
           {/* خطا */}
           {error && (
-            <div className="bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
-              <p className="text-xs text-rose-600 text-right">{error}</p>
+            <div className="bg-[var(--danger-light)] border border-[color:var(--danger-border)] rounded-xl px-4 py-3">
+              <p className="text-xs text-[color:var(--danger)] text-right">{error}</p>
             </div>
           )}
 
@@ -224,7 +220,7 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#0F6F5C] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5"
+              className="flex-1 bg-[var(--brand)] hover:bg-[var(--brand-dark)] disabled:opacity-70 text-white font-semibold rounded-xl py-2.5 text-xs flex items-center justify-center gap-1.5 transition-colors"
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
               ثبت وام و ساخت اقساط
@@ -232,7 +228,7 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
             <button
               type="button"
               onClick={() => { reset(); onClose(); }}
-              className="bg-[#F3F4F6] text-[#26241F] font-semibold rounded-xl px-4 py-2.5 text-xs"
+              className="bg-[var(--bg)] border border-[color:var(--border)] text-[color:var(--ink)] font-semibold rounded-xl px-4 py-2.5 text-xs hover:bg-[var(--hover)] transition-colors"
             >
               انصراف
             </button>
