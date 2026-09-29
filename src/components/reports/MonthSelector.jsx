@@ -61,7 +61,12 @@ function buildMonthPeriod(jy, jm) {
   return { isAll: false, jy, jm, from, to, label: `${MONTHS[jm - 1]} ${jy}` };
 }
 
-export default function MonthSelector({ display, unit, onPeriodChange  , cardId  }) {
+// استایل مشترک دکمه‌های گرد (همه‌ی تراکنش‌ها و ماه‌ها)
+const PILL_ACTIVE   = "bg-[var(--brand)] border-[color:var(--brand)] text-white";
+const PILL_INACTIVE =
+  "bg-[var(--bg)] border-[color:var(--border)] text-[color:var(--muted)] hover:bg-[var(--hover)]";
+
+export default function MonthSelector({ display, unit, onPeriodChange, cardId }) {
   const todayG = new Date();
   const todayJ = toJalali(todayG.getFullYear(), todayG.getMonth() + 1, todayG.getDate());
 
@@ -72,22 +77,22 @@ export default function MonthSelector({ display, unit, onPeriodChange  , cardId 
   const [loading, setLoading] = useState(false);
 
   const fetchSummary = useCallback(async (period) => {
-  setLoading(true);
-  try {
-    const params = {};
-    if (!period.isAll && period.from && period.to) {
-      params.from = period.from;
-      params.to   = period.to;
+    setLoading(true);
+    try {
+      const params = {};
+      if (!period.isAll && period.from && period.to) {
+        params.from = period.from;
+        params.to   = period.to;
+      }
+      if (cardId) params.cardId = cardId;
+      const res = await api.get("/finance/stats", { params });
+      setSummary(res.data.summary ?? null);
+    } catch {
+      setSummary(null);
+    } finally {
+      setLoading(false);
     }
-    if (cardId) params.cardId = cardId;   // ← اضافه شد
-    const res = await api.get("/finance/stats", { params });
-    setSummary(res.data.summary ?? null);
-  } catch {
-    setSummary(null);
-  } finally {
-    setLoading(false);
-  }
-}, [cardId]); 
+  }, [cardId]);
 
   useEffect(() => {
     const period = mode === "all" ? buildAllPeriod() : buildMonthPeriod(jy, jm);
@@ -97,16 +102,15 @@ export default function MonthSelector({ display, unit, onPeriodChange  , cardId 
   }, [mode, jy, jm]);
 
   return (
-    <div dir="rtl" className="bg-white rounded-2xl border border-[#EDE8DC] p-5 mb-6">
+    <div dir="rtl" className="bg-[var(--card)] rounded-2xl border border-[color:var(--border)] p-5 mb-6">
 
       {/* دکمه همه */}
       <div className="flex justify-start mb-3">
         <button
           onClick={() => setMode("all")}
+          aria-pressed={mode === "all"}
           className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${
-            mode === "all"
-              ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-              : "bg-[#F7F4EE] border-[#EDE8DC] text-[#8A8273] hover:bg-[#EDE8DC]"
+            mode === "all" ? PILL_ACTIVE : PILL_INACTIVE
           }`}
         >
           نمایش همه‌ی تراکنش‌ها
@@ -119,16 +123,18 @@ export default function MonthSelector({ display, unit, onPeriodChange  , cardId 
       <div className="flex items-center justify-center gap-2 mb-3">
         <button
           onClick={() => setJy((y) => y + 1)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-[#0F6F5C] hover:bg-[#F7F4EE] transition-colors"
+          aria-label="سال بعد"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[color:var(--brand)] hover:bg-[var(--hover)] transition-colors"
         >
           <ChevronRight size={20} strokeWidth={2.5} />
         </button>
 
-        <span className="text-base font-extrabold text-[#26241F] w-16 text-center">{jy}</span>
+        <span className="text-base font-extrabold text-[color:var(--ink)] w-16 text-center">{jy}</span>
 
         <button
           onClick={() => setJy((y) => y - 1)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl text-[#0F6F5C] hover:bg-[#F7F4EE] transition-colors"
+          aria-label="سال قبل"
+          className="w-9 h-9 flex items-center justify-center rounded-xl text-[color:var(--brand)] hover:bg-[var(--hover)] transition-colors"
         >
           <ChevronLeft size={20} strokeWidth={2.5} />
         </button>
@@ -143,10 +149,9 @@ export default function MonthSelector({ display, unit, onPeriodChange  , cardId 
             <button
               key={m}
               onClick={() => { setJm(m); setMode("pick"); }}
+              aria-pressed={isActive}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold border transition-colors ${
-                isActive
-                  ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                  : "bg-[#F7F4EE] border-[#EDE8DC] text-[#8A8273] hover:bg-[#EDE8DC]"
+                isActive ? PILL_ACTIVE : PILL_INACTIVE
               }`}
             >
               {label}
@@ -158,29 +163,29 @@ export default function MonthSelector({ display, unit, onPeriodChange  , cardId 
       {/* خلاصه */}
       {loading ? (
         <div className="flex justify-center mt-4">
-          <Loader2 className="animate-spin text-[#0F6F5C]" size={20} />
+          <Loader2 className="animate-spin text-[color:var(--brand)]" size={20} />
         </div>
       ) : summary ? (
         <>
-          <p className="text-sm font-bold text-[#26241F] text-center mt-4 mb-3">
+          <p className="text-sm font-bold text-[color:var(--ink)] text-center mt-4 mb-3">
             {mode === "all" ? "همه‌ی زمان‌ها" : `${MONTHS[jm - 1]} ${jy}`}
           </p>
           <div className="flex gap-2">
-            <div className="flex-1 bg-[#E6F4EA] rounded-2xl py-3 flex flex-col items-center">
-              <span className="text-[11px] text-[#555] mb-1">درآمد</span>
-              <span className="text-xs font-extrabold text-[#059669]">
+            <div className="flex-1 bg-[var(--success-light)] rounded-2xl py-3 flex flex-col items-center">
+              <span className="text-[11px] text-[color:var(--muted)] mb-1">درآمد</span>
+              <span className="text-xs font-extrabold text-[color:var(--success)]">
                 {display(summary.totalIncome)} {unit}
               </span>
             </div>
-            <div className="flex-1 bg-[#FDECEC] rounded-2xl py-3 flex flex-col items-center">
-              <span className="text-[11px] text-[#555] mb-1">خرج</span>
-              <span className="text-xs font-extrabold text-[#E11D48]">
+            <div className="flex-1 bg-[var(--danger-light)] rounded-2xl py-3 flex flex-col items-center">
+              <span className="text-[11px] text-[color:var(--muted)] mb-1">خرج</span>
+              <span className="text-xs font-extrabold text-[color:var(--danger)]">
                 {display(summary.totalExpense)} {unit}
               </span>
             </div>
-            <div className="flex-1 bg-[#EAF0FF] rounded-2xl py-3 flex flex-col items-center">
-              <span className="text-[11px] text-[#555] mb-1">مانده</span>
-              <span className="text-xs font-extrabold text-[#0F6F5C]">
+            <div className="flex-1 bg-[color-mix(in_srgb,var(--brand)_10%,transparent)] rounded-2xl py-3 flex flex-col items-center">
+              <span className="text-[11px] text-[color:var(--muted)] mb-1">مانده</span>
+              <span className="text-xs font-extrabold text-[color:var(--brand)]">
                 {display(summary.cashBalance)} {unit}
               </span>
             </div>
