@@ -7,6 +7,7 @@ import { ShieldCheck, KeyRound, Smartphone } from "lucide-react";
 import PhoneInputStep from "@/components/auth/PhoneInputStep";
 import OtpInputStep from "@/components/auth/OtpInputStep";
 import SuccessStep from "@/components/auth/SuccessStep";
+import AuthRedirect from "@/components/AuthRedirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function LoginPage() {
 
   return (
     <div dir="rtl" lang="fa" className="min-h-screen w-full bg-[#F7F4EE] flex items-center justify-center p-6 font-sans">
+       <AuthRedirect />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
         .font-sans { font-family: 'Vazirmatn', sans-serif; }
