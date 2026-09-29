@@ -5,6 +5,7 @@ import { Bell, BellRing, Check, Settings } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 
 const LAST_SEEN_KEY = "notif_last_seen_count";
+
 export default function DashboardHeader({
   notifications,
   unreadCount,
@@ -32,10 +33,10 @@ export default function DashboardHeader({
   const greetingName = userName?.trim() || userPhone || "";
 
   return (
-    <header className="flex items-center justify-between mb-4 bg-white dark:bg-[#1E1D1A] p-4 rounded-[20px] border border-[#EDE8DC] dark:border-[#3A3832] relative">
+    <header className="flex items-center justify-between mb-4 bg-[var(--card)] p-4 rounded-[20px] border border-[color:var(--border)] relative">
       <div>
-        <h1 className="text-base font-bold text-[#26241F] dark:text-[#F3F0E8]">داشبورد مالی 💰</h1>
-        <p className="text-[11px] text-[#8A8273] mt-0.5">
+        <h1 className="text-base font-bold text-[color:var(--ink)]">داشبورد مالی 💰</h1>
+        <p className="text-[11px] text-[color:var(--muted)] mt-0.5">
           {greetingName ? `خوش آمدید، ${greetingName}` : "مدیریت درآمد، خرج، اقساط و وام‌ها"}
         </p>
       </div>
@@ -46,15 +47,15 @@ export default function DashboardHeader({
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             aria-label="اعلان‌ها"
-            className="relative w-[38px] h-[38px] rounded-full bg-[#F7F4EE] dark:bg-[#141311] hover:bg-[#EFEAE0] flex items-center justify-center transition-colors"
+            className="relative w-[38px] h-[38px] rounded-full bg-[var(--bg)] hover:bg-[var(--hover)] flex items-center justify-center transition-colors"
           >
             {hasNewNotifications ? (
-              <BellRing size={20} className="text-amber-600" />
+              <BellRing size={20} className="text-[color:var(--amber-mid)]" />
             ) : (
-              <Bell size={20} className="text-[#8A8273]" />
+              <Bell size={20} className="text-[color:var(--muted)]" />
             )}
             {hasNewNotifications && (
-              <span className="absolute top-0 left-0 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-[1.5px] border-white">
+              <span className="absolute top-0 left-0 w-4 h-4 bg-[var(--rose-mid)] text-white text-[9px] font-bold flex items-center justify-center rounded-full border-[1.5px] border-[color:var(--card)]">
                 {newCount}
               </span>
             )}
@@ -63,38 +64,38 @@ export default function DashboardHeader({
           {isNotifOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#1E1D1A] rounded-2xl shadow-xl border border-[#EDE8DC] dark:border-[#3A3832] z-50 overflow-hidden">
-                <div className="p-3 border-b border-[#EDE8DC] dark:border-[#3A3832] bg-[#FBF9F4] dark:bg-[#262521] flex justify-between items-center">
-                  <span className="text-xs font-bold text-[#26241F] dark:text-[#F3F0E8]">اعلانات و یادآوری‌ها</span>
-                  <span className="text-[10px] bg-[#EDE8DC] text-[#8A8273] px-2 py-0.5 rounded-full">
+              <div className="absolute top-full left-0 mt-2 w-72 bg-[var(--card)] rounded-2xl shadow-xl border border-[color:var(--border)] z-50 overflow-hidden">
+                <div className="p-3 border-b border-[color:var(--border)] bg-[var(--hover)] flex justify-between items-center">
+                  <span className="text-xs font-bold text-[color:var(--ink)]">اعلانات و یادآوری‌ها</span>
+                  <span className="text-[10px] bg-[var(--border)] text-[color:var(--muted)] px-2 py-0.5 rounded-full">
                     {unreadCount} جدید
                   </span>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-[#8A8273]">پیامی ندارید</div>
+                    <div className="p-4 text-center text-xs text-[color:var(--muted)]">پیامی ندارید</div>
                   ) : (
                     notifications.map((notif) => (
                       <div
                         key={notif._id}
-                        className={`p-3 border-b border-[#F3EFE6] text-xs ${
-                          notif.isRead ? "opacity-60" : "bg-amber-50/30"
+                        className={`p-3 border-b border-[color:var(--border)] text-xs ${
+                          notif.isRead ? "opacity-60" : "bg-[var(--warning-light)]"
                         }`}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <strong className="text-[#26241F] dark:text-[#F3F0E8]">{notif.title}</strong>
+                          <strong className="text-[color:var(--ink)]">{notif.title}</strong>
                           {!notif.isRead && (
                             <button
                               onClick={() => onMarkAsRead(notif._id)}
                               aria-label="خوانده شد"
-                              className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"
+                              className="text-[color:var(--emerald-mid)] hover:bg-[var(--emerald-bg)] p-1 rounded"
                             >
                               <Check size={14} />
                             </button>
                           )}
                         </div>
-                        <p className="text-[#8A8273] leading-relaxed text-[11px]">{notif.message}</p>
-                        <span className="text-[9px] text-[#B5AE9F] mt-2 block">
+                        <p className="text-[color:var(--muted)] leading-relaxed text-[11px]">{notif.message}</p>
+                        <span className="text-[9px] text-[color:var(--muted-light)] mt-2 block">
                           {formatJalaliDate(notif.createdAt)}
                         </span>
                       </div>
@@ -110,9 +111,9 @@ export default function DashboardHeader({
         <Link
           href="/settings"
           aria-label="تنظیمات"
-          className="w-[38px] h-[38px] rounded-full bg-[#F7F4EE] dark:bg-[#141311] hover:bg-[#EFEAE0] flex items-center justify-center transition-colors"
+          className="w-[38px] h-[38px] rounded-full bg-[var(--bg)] hover:bg-[var(--hover)] flex items-center justify-center transition-colors"
         >
-          <Settings size={18} className="text-[#8A8273]" />
+          <Settings size={18} className="text-[color:var(--muted)]" />
         </Link>
       </div>
     </header>
