@@ -205,7 +205,6 @@ export default function GoalsContent() {
           ))
         )}
       </div>
-
       {/* واریز به هدف — مودال اختصاصی (معادل DepositToGoalModal در موبایل) */}
       <DepositToGoalModal
         key={depositGoal?._id ?? "closed"}
