@@ -8,20 +8,32 @@ import {
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
+import "react-multi-date-picker/styles/backgrounds/bg-dark.css";
 import api from "@/lib/axios";
 import { useCurrency } from "@/context/currencyContext";
 import { useCard } from "@/context/cardContext";
+import { useTheme } from "@/context/themeContext";
 import TransactionModal       from "@/components/dashboard/TransactionModal";
 import TransactionDetailModal from "@/components/dashboard/TransactionDetailModal";
 import PayInstallmentModal    from "@/components/dashboard/PayInstallmentModal";
 
 const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام" };
+
+// رنگ هر نوع تراکنش از متغیرهای تم (success / danger / warning / info)
 const TYPE_COLORS = {
-  INCOME:      "bg-emerald-50 text-emerald-700 border-emerald-100",
-  EXPENSE:     "bg-rose-50    text-rose-700    border-rose-100",
-  INSTALLMENT: "bg-orange-50  text-orange-700  border-orange-100",
-  LOAN:        "bg-blue-50    text-blue-700    border-blue-100",
+  INCOME:
+    "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[color:var(--success)] border-[color-mix(in_srgb,var(--success)_25%,transparent)]",
+  EXPENSE:
+    "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[color:var(--danger)] border-[color-mix(in_srgb,var(--danger)_25%,transparent)]",
+  INSTALLMENT:
+    "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[color:var(--warning)] border-[color-mix(in_srgb,var(--warning)_25%,transparent)]",
+  LOAN:
+    "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
 };
+
+const ICON_BTN = "w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[var(--hover)] transition-colors";
+const PAGE_ARROW =
+  "w-9 h-9 rounded-xl border border-[color:var(--border)] bg-[var(--card)] text-[color:var(--ink)] flex items-center justify-center disabled:opacity-30 hover:bg-[var(--hover)] transition-colors";
 
 function formatJalali(iso) {
   if (!iso) return "";
@@ -48,24 +60,24 @@ function buildPageList(current, total) {
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
-  const pages  = buildPageList(currentPage, totalPages);
-  const goTo   = (p) => { if (p >= 1 && p <= totalPages && p !== currentPage) onPageChange(p); };
+  const pages = buildPageList(currentPage, totalPages);
+  const goTo  = (p) => { if (p >= 1 && p <= totalPages && p !== currentPage) onPageChange(p); };
   return (
-    <div className="flex items-center justify-center gap-1.5 pt-4 border-t border-[#EDE8DC] mt-4">
+    <div className="flex items-center justify-center gap-1.5 pt-4 border-t border-[color:var(--border)] mt-4">
       <button onClick={() => goTo(currentPage - 1)} disabled={currentPage <= 1}
-        className="w-9 h-9 rounded-xl border border-[#EDE8DC] bg-white flex items-center justify-center disabled:opacity-30 hover:bg-[#F7F4EE] transition-colors">
+        aria-label="صفحه قبل" className={PAGE_ARROW}>
         <ChevronRight size={17} />
       </button>
       <div className="flex items-center gap-1">
         {pages.map((p, i) =>
           p === "dots-start" || p === "dots-end" ? (
-            <span key={`${p}-${i}`} className="w-8 text-center text-sm text-[#8A8273]">···</span>
+            <span key={`${p}-${i}`} className="w-8 text-center text-sm text-[color:var(--muted)]">···</span>
           ) : (
             <button key={p} onClick={() => goTo(p)} disabled={p === currentPage}
               className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-colors ${
                 p === currentPage
-                  ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                  : "bg-white border-[#EDE8DC] text-[#26241F] hover:bg-[#F7F4EE]"
+                  ? "bg-[var(--brand)] border-[color:var(--brand)] text-white"
+                  : "bg-[var(--card)] border-[color:var(--border)] text-[color:var(--ink)] hover:bg-[var(--hover)]"
               }`}>
               {p}
             </button>
@@ -73,7 +85,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         )}
       </div>
       <button onClick={() => goTo(currentPage + 1)} disabled={currentPage >= totalPages}
-        className="w-9 h-9 rounded-xl border border-[#EDE8DC] bg-white flex items-center justify-center disabled:opacity-30 hover:bg-[#F7F4EE] transition-colors">
+        aria-label="صفحه بعد" className={PAGE_ARROW}>
         <ChevronLeft size={17} />
       </button>
     </div>
@@ -83,59 +95,60 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
 function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
   const isPositive = tx.type === "INCOME" || tx.type === "LOAN";
   return (
-    <div className="py-3.5 border-b border-[#EDE8DC] last:border-0">
+    <div className="py-3.5 border-b border-[color:var(--border)] last:border-0">
       <div className="flex flex-row-reverse items-start gap-3">
         <div className={`shrink-0 w-12 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold border ${TYPE_COLORS[tx.type]}`}>
           {TYPE_LABELS[tx.type]}
         </div>
         <div className="flex-1 min-w-0 text-right">
-          <p className="text-sm font-semibold text-[#26241F] truncate">{tx.title}</p>
+          <p className="text-sm font-semibold text-[color:var(--ink)] truncate">{tx.title}</p>
           {tx.description && (
-            <p className="text-xs text-[#8A8273] mt-0.5 line-clamp-2">{tx.description}</p>
+            <p className="text-xs text-[color:var(--muted)] mt-0.5 line-clamp-2">{tx.description}</p>
           )}
           {tx.categoryInfo && (
-            <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[#8A8273] bg-[#F7F4EE] px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[color:var(--muted)] bg-[var(--bg)] px-2 py-0.5 rounded-full">
               {tx.categoryInfo.icon && <span>{tx.categoryInfo.icon}</span>}
               {tx.categoryInfo.label}
             </span>
           )}
           {tx.dueDate && tx.type === "INSTALLMENT" && !tx.isPaid && (
-            <span className="inline-block mt-1 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+            <span className="inline-block mt-1 text-[10px] text-[color:var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-2 py-0.5 rounded-full">
               سررسید: {formatJalali(tx.dueDate)}
             </span>
           )}
         </div>
         <div className="shrink-0 text-left">
-          <p className={`text-base font-extrabold ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
+          <p className={`text-base font-extrabold ${isPositive ? "text-[color:var(--success)]" : "text-[color:var(--danger)]"}`}>
             {isPositive ? "+" : "-"}{display(tx.amount)}
           </p>
-          <p className="text-[11px] text-[#8A8273] font-medium">{unit}</p>
-          <p className="text-[10px] text-[#B5AFA3] mt-0.5">{formatJalali(tx.date)}</p>
+          <p className="text-[11px] text-[color:var(--muted)] font-medium">{unit}</p>
+          <p className="text-[10px] text-[color:var(--muted-light)] mt-0.5">{formatJalali(tx.date)}</p>
         </div>
       </div>
       <div className="flex flex-row-reverse items-center justify-between mt-2.5">
         <div>
           {tx.type === "INSTALLMENT" && !tx.isPaid && (
             <button onClick={() => onPay(tx._id)}
-              className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors">
+              className="flex items-center gap-1 text-[10px] font-semibold text-[color:var(--success)] bg-[var(--success-light)] px-2.5 py-1 rounded-lg hover:bg-[color-mix(in_srgb,var(--success)_22%,transparent)] transition-colors">
               <CheckCircle size={11} /> پرداخت
             </button>
           )}
           {tx.type === "INSTALLMENT" && tx.isPaid && (
-            <span className="flex items-center gap-1 text-[10px] text-emerald-600">
+            <span className="flex items-center gap-1 text-[10px] text-[color:var(--success)]">
               <CheckCircle size={11} /> پرداخت شده
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => onView(tx)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#F7F4EE] transition-colors">
-            <Eye size={14} className="text-[#8A8273]" />
+          <button onClick={() => onView(tx)} aria-label="مشاهده" className={ICON_BTN}>
+            <Eye size={14} className="text-[color:var(--muted)]" />
           </button>
-          <button onClick={() => onEdit(tx)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#F7F4EE] transition-colors">
-            <Pencil size={14} className="text-[#8A8273]" />
+          <button onClick={() => onEdit(tx)} aria-label="ویرایش" className={ICON_BTN}>
+            <Pencil size={14} className="text-[color:var(--muted)]" />
           </button>
-          <button onClick={() => onDelete(tx)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-rose-50 transition-colors">
-            <Trash2 size={14} className="text-rose-500" />
+          <button onClick={() => onDelete(tx)} aria-label="حذف"
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[var(--danger-light)] transition-colors">
+            <Trash2 size={14} className="text-[color:var(--danger)]" />
           </button>
         </div>
       </div>
@@ -147,6 +160,7 @@ export default function TransactionsContent() {
   const router = useRouter();
   const { display, unit } = useCurrency();
   const { activeCard, cards } = useCard();
+  const { mode } = useTheme();
 
   const [transactions,         setTransactions]         = useState([]);
   const [loading,              setLoading]              = useState(true);
@@ -170,6 +184,7 @@ export default function TransactionsContent() {
 
   const searchTimeoutRef = useRef(null);
   const hasDateFilter    = Boolean(fromDate || toDate);
+  const pickerClass      = mode === "dark" ? "bg-dark" : "";
 
   // ── fetch ──
   const fetchTransactions = useCallback(async (page = 1, search = "", from = null, to = null) => {
@@ -313,13 +328,16 @@ export default function TransactionsContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [searchQuery, fromDate, toDate, fetchTransactions]);
 
+  const openCreate = () => { setEditingTx(null); setIsModalOpen(true); };
+
   return (
-    <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] font-sans">
+    <div dir="rtl" lang="fa" className="min-h-screen bg-[var(--bg)] font-sans">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
         .font-sans { font-family: 'Vazirmatn', sans-serif; }
-        .rmdp-input { width: 100% !important; height: 40px !important; border-radius: 0.75rem !important; background-color: #F7F4EE !important; border-color: #EDE8DC !important; font-size: 0.8125rem !important; padding: 0.5rem 0.875rem !important; outline: none !important; text-align: right; font-family: 'Vazirmatn', sans-serif; }
-        .rmdp-input:focus { border-color: #0F6F5C !important; }
+        .rmdp-input { width: 100% !important; height: 40px !important; border-radius: 0.75rem !important; background-color: var(--input-bg) !important; color: var(--ink) !important; border: 1px solid var(--input-border) !important; font-size: 0.8125rem !important; padding: 0.5rem 0.875rem !important; outline: none !important; text-align: right; font-family: 'Vazirmatn', sans-serif; }
+        .rmdp-input:focus { border-color: var(--brand) !important; box-shadow: none !important; }
+        .rmdp-input::placeholder { color: var(--muted-light); }
       `}</style>
 
       <div className="max-w-2xl mx-auto p-4 sm:p-6">
@@ -327,43 +345,44 @@ export default function TransactionsContent() {
         {/* هدر */}
         <div className="flex items-center mb-5">
           <button onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-1.5 text-sm text-[#8A8273] hover:text-[#26241F] transition-colors">
+            className="flex items-center gap-1.5 text-sm text-[color:var(--muted)] hover:text-[color:var(--ink)] transition-colors">
             <ArrowRight size={15} /> بازگشت
           </button>
-          <h1 className="flex-1 text-center text-xl font-bold text-[#26241F]">تراکنش‌ها</h1>
+          <h1 className="flex-1 text-center text-xl font-bold text-[color:var(--ink)]">تراکنش‌ها</h1>
           <div className="flex items-center gap-2">
-            <button onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
-              className="bg-[#0F6F5C] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#0a5c4a] transition-colors">
+            <button onClick={openCreate}
+              className="bg-[var(--brand)] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[var(--brand-dark)] transition-colors">
               + جدید
             </button>
             <button onClick={handleDownloadCSV} disabled={downloading}
-              className="w-9 h-9 rounded-xl border border-[#0F6F5C] bg-[#E6F4F1] flex items-center justify-center hover:bg-[#CCE9E3] transition-colors disabled:opacity-50"
-              title="دانلود CSV">
+              className="w-9 h-9 rounded-xl border border-[color:var(--brand)] bg-[color-mix(in_srgb,var(--brand)_10%,transparent)] flex items-center justify-center hover:bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] transition-colors disabled:opacity-50"
+              title="دانلود CSV" aria-label="دانلود CSV">
               {downloading
-                ? <Loader2 size={15} className="animate-spin text-[#0F6F5C]" />
-                : <Download size={15} className="text-[#0F6F5C]" />}
+                ? <Loader2 size={15} className="animate-spin text-[color:var(--brand)]" />
+                : <Download size={15} className="text-[color:var(--brand)]" />}
             </button>
           </div>
         </div>
 
         {/* سرچ و فیلتر */}
         <div className="flex flex-row-reverse gap-2 mb-3">
-          <div className="flex-1 flex flex-row-reverse items-center gap-2 bg-white border border-[#EDE8DC] rounded-xl px-3 py-2.5">
-            <Search size={14} className="text-[#8A8273] shrink-0" />
+          <div className="flex-1 flex flex-row-reverse items-center gap-2 bg-[var(--input-bg)] border border-[color:var(--input-border)] rounded-xl px-3 py-2.5">
+            <Search size={14} className="text-[color:var(--muted)] shrink-0" />
             <input type="text" placeholder="جستجو..." value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="flex-1 text-sm text-right bg-transparent outline-none text-[#26241F] placeholder:text-[#B5AFA3]" />
+              className="flex-1 text-sm text-right bg-transparent outline-none text-[color:var(--ink)] placeholder:text-[color:var(--muted-light)]" />
             {searchQuery && (
-              <button onClick={() => handleSearch("")}>
-                <X size={13} className="text-[#8A8273]" />
+              <button onClick={() => handleSearch("")} aria-label="پاک کردن جستجو">
+                <X size={13} className="text-[color:var(--muted)]" />
               </button>
             )}
           </div>
           <button onClick={() => setShowDateFilter(!showDateFilter)}
+            aria-label="فیلتر تاریخ" aria-pressed={showDateFilter}
             className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-colors ${
               hasDateFilter
-                ? "bg-[#0F6F5C] border-[#0F6F5C] text-white"
-                : "bg-white border-[#EDE8DC] text-[#0F6F5C] hover:bg-[#F7F4EE]"
+                ? "bg-[var(--brand)] border-[color:var(--brand)] text-white"
+                : "bg-[var(--card)] border-[color:var(--border)] text-[color:var(--brand)] hover:bg-[var(--hover)]"
             }`}>
             <Calendar size={15} />
           </button>
@@ -371,35 +390,35 @@ export default function TransactionsContent() {
 
         {/* پانل فیلتر تاریخ */}
         {showDateFilter && (
-          <div className="bg-white border border-[#EDE8DC] rounded-2xl p-4 mb-4 space-y-3">
-            <p className="text-xs font-bold text-[#26241F] text-right">فیلتر بازه زمانی</p>
+          <div className="bg-[var(--card)] border border-[color:var(--border)] rounded-2xl p-4 mb-4 space-y-3">
+            <p className="text-xs font-bold text-[color:var(--ink)] text-right">فیلتر بازه زمانی</p>
             <div className="flex flex-row-reverse gap-3">
               <div className="flex-1">
-                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">از تاریخ</label>
-                <DatePicker calendar={persian} locale={persian_fa} value={fromDate}
+                <label className="block text-[11px] font-semibold text-[color:var(--muted)] mb-1.5 text-right">از تاریخ</label>
+                <DatePicker className={pickerClass} calendar={persian} locale={persian_fa} value={fromDate}
                   onChange={(d) => setFromDate(d?.isValid ? d.toDate() : null)}
                   calendarPosition="bottom-right" placeholder="انتخاب تاریخ" maxDate={toDate || undefined} />
               </div>
               <div className="flex-1">
-                <label className="block text-[11px] font-semibold text-[#8A8273] mb-1.5 text-right">تا تاریخ</label>
-                <DatePicker calendar={persian} locale={persian_fa} value={toDate}
+                <label className="block text-[11px] font-semibold text-[color:var(--muted)] mb-1.5 text-right">تا تاریخ</label>
+                <DatePicker className={pickerClass} calendar={persian} locale={persian_fa} value={toDate}
                   onChange={(d) => setToDate(d?.isValid ? d.toDate() : null)}
                   calendarPosition="bottom-left" placeholder="انتخاب تاریخ" minDate={fromDate || undefined} />
               </div>
             </div>
             {hasDateFilter && (
-              <p className="text-[11px] text-[#0F6F5C] text-right font-medium">
+              <p className="text-[11px] text-[color:var(--brand)] text-right font-medium">
                 {fromDate ? formatJalali(fromDate) : "..."} تا {toDate ? formatJalali(toDate) : "..."}
               </p>
             )}
             <div className="flex flex-row-reverse gap-2">
               <button onClick={applyDateFilter}
-                className="flex-1 bg-[#0F6F5C] text-white text-xs font-bold rounded-xl py-2.5 hover:bg-[#0a5c4a] transition-colors">
+                className="flex-1 bg-[var(--brand)] text-white text-xs font-bold rounded-xl py-2.5 hover:bg-[var(--brand-dark)] transition-colors">
                 اعمال فیلتر
               </button>
               {hasDateFilter && (
                 <button onClick={clearDateFilter}
-                  className="bg-rose-50 text-rose-600 text-xs font-semibold rounded-xl px-4 py-2.5 hover:bg-rose-100 transition-colors">
+                  className="bg-[var(--danger-light)] text-[color:var(--danger)] text-xs font-semibold rounded-xl px-4 py-2.5 hover:bg-[color-mix(in_srgb,var(--danger)_20%,transparent)] transition-colors">
                   حذف فیلتر
                 </button>
               )}
@@ -408,12 +427,12 @@ export default function TransactionsContent() {
         )}
 
         {/* لیست */}
-        <div className="bg-white rounded-2xl border border-[#EDE8DC] shadow-sm">
+        <div className="bg-[var(--card)] rounded-2xl border border-[color:var(--border)] shadow-sm">
           {!loading && totalItems > 0 && (
-            <div className="px-4 py-3 border-b border-[#EDE8DC] flex flex-row-reverse items-center justify-between">
-              <span className="text-xs text-[#8A8273]">{totalItems} تراکنش</span>
+            <div className="px-4 py-3 border-b border-[color:var(--border)] flex flex-row-reverse items-center justify-between">
+              <span className="text-xs text-[color:var(--muted)]">{totalItems} تراکنش</span>
               {hasDateFilter && (
-                <span className="text-[10px] text-[#0F6F5C] font-medium">
+                <span className="text-[10px] text-[color:var(--brand)] font-medium">
                   {fromDate ? formatJalali(fromDate) : "..."} تا {toDate ? formatJalali(toDate) : "..."}
                 </span>
               )}
@@ -422,16 +441,16 @@ export default function TransactionsContent() {
           <div className="px-4">
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="animate-spin text-[#0F6F5C]" size={24} />
+                <Loader2 className="animate-spin text-[color:var(--brand)]" size={24} />
               </div>
             ) : transactions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-2">
-                <p className="text-sm text-[#8A8273]">
+                <p className="text-sm text-[color:var(--muted)]">
                   {searchQuery || hasDateFilter ? "تراکنشی با این فیلتر یافت نشد" : "تراکنشی یافت نشد"}
                 </p>
                 {!searchQuery && !hasDateFilter && (
-                  <button onClick={() => { setEditingTx(null); setIsModalOpen(true); }}
-                    className="text-xs text-[#0F6F5C] font-semibold hover:underline mt-1">
+                  <button onClick={openCreate}
+                    className="text-xs text-[color:var(--brand)] font-semibold hover:underline mt-1">
                     اولین تراکنشت رو ثبت کن
                   </button>
                 )}
