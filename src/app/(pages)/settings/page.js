@@ -425,7 +425,6 @@ export default function SettingsPage() {
       .catch(() => router.push("/"))
       .finally(() => setLoading(false));
   }, []);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F7F4EE] flex items-center justify-center">
@@ -433,7 +432,6 @@ export default function SettingsPage() {
       </div>
     );
   }
-
   return (
     <CurrencyProvider initialCurrency={user?.currency ?? "IRT"}>
       <SettingsContent user={user} />
