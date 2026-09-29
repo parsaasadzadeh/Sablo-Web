@@ -5,7 +5,6 @@ import { Bell, BellRing, Check, Settings } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 
 const LAST_SEEN_KEY = "notif_last_seen_count";
-
 export default function DashboardHeader({
   notifications,
   unreadCount,
