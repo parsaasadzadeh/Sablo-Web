@@ -6,10 +6,12 @@ import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CtaSection from "@/components/landing/CtaSection";
 import AboutSablo from "@/components/landing/aboutsablo";
 import Footer from "@/components/landing/Footer";
+import AuthRedirect from "@/components/AuthRedirect";
 
 export default function Home() {
   return (
     <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] font-sans text-[#26241F]">
+       <AuthRedirect />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
         .font-sans { font-family: 'Vazirmatn', sans-serif; }
