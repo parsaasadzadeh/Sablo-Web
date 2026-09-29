@@ -1,14 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   User,
-  CreditCard,
-  Coins,
   Bell,
-  BellRing,
-  BellOff,
   LogOut,
   X,
   CheckCircle2,
@@ -20,16 +16,16 @@ import {
   Moon,
 } from "lucide-react";
 import api from "@/lib/axios";
-import { CurrencyProvider, useCurrency } from "@/context/currencyContext";
 import { useTheme } from "@/context/themeContext";
 
-const RUBIKA_BOT_URL = "https://rubika.ir/SabloFinanceBot";
+// ⚠️ آدرس ربات تلگرام را با نام واقعی ربات خودتان عوض کنید
+const TELEGRAM_BOT_URL = "https://t.me/SabloFinanceBot";
 
 /* هر گام: رنگ آیکن و پس‌زمینه از توکن‌های تم */
 const STEPS = [
-  { icon: Smartphone, fg: "--info", bg: "--info-light", title: "ورود به روبیکا",
-    desc: "اپلیکیشن روبیکا را باز کنید. اگر حساب ندارید ابتدا ثبت‌نام کنید.", warning: null },
-  { icon: Hash, fg: "--rubika", bg: "--rubika-light", title: "جستجوی ربات",
+  { icon: Smartphone, fg: "--info", bg: "--info-light", title: "ورود به تلگرام",
+    desc: "اپلیکیشن تلگرام را باز کنید. اگر حساب ندارید ابتدا ثبت‌نام کنید.", warning: null },
+  { icon: Hash, fg: "--telegram", bg: "--telegram-light", title: "جستجوی ربات",
     desc: "در قسمت جستجو، نام «SabloFinanceBot» را تایپ کنید یا روی دکمه «رفتن به ربات» بزنید.", warning: null },
   { icon: CheckCircle2, fg: "--brand", bg: "--brand-light", title: "ارسال استارت",
     desc: "وارد ربات شوید و دکمه «شروع / Start» را لمس کنید تا ربات فعال شود.", warning: null },
@@ -38,14 +34,14 @@ const STEPS = [
     warning: "شماره موبایل باید دقیقاً همان شماره‌ای باشد که در سابلو ثبت کرده‌اید." },
   { icon: Wifi, fg: "--danger", bg: "--danger-light", title: "قطع نکردن ربات",
     desc: "پس از راه‌اندازی، ربات را بلاک یا حذف نکنید. در غیر این صورت اعلان‌ها ارسال نخواهند شد.",
-    warning: "گزینه «قطع اتصال» یا «Block» را نزنید — اعلان‌های سررسید قطع می‌شوند." },
+    warning: "گزینه «Stop and block bot» را نزنید — اعلان‌های سررسید قطع می‌شوند." },
 ];
 
 const toPersianNum = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[+d]);
 const v = (name) => `var(${name})`;
 
 /* ───────── مودال راهنما ───────── */
-function RubikaGuideModal({ open, onClose, onGoToBot }) {
+function TelegramGuideModal({ open, onClose, onGoToBot }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -73,7 +69,7 @@ function RubikaGuideModal({ open, onClose, onGoToBot }) {
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[color:var(--border)]">
           <div>
             <h2 className="text-base font-bold text-[color:var(--ink)]">راهنمای فعال‌سازی اعلان</h2>
-            <p className="text-xs text-[color:var(--muted)] mt-0.5">ربات یادآوری اقساط روبیکا</p>
+            <p className="text-xs text-[color:var(--muted)] mt-0.5">ربات یادآوری اقساط تلگرام</p>
           </div>
           <button onClick={onClose} aria-label="بستن" className="p-1.5 rounded-full hover:bg-[var(--hover)]">
             <X size={22} className="text-[color:var(--muted)]" />
@@ -83,7 +79,7 @@ function RubikaGuideModal({ open, onClose, onGoToBot }) {
         <div className="flex items-center gap-2 mx-4 mt-3.5 mb-1 px-3 py-2.5 rounded-xl bg-[var(--warning-light)] border border-[color:var(--warning-border)]">
           <AlertTriangle size={16} className="text-[color:var(--warning)] shrink-0" />
           <p className="text-xs font-semibold text-[color:var(--warning)] leading-5">
-            برای استفاده از این قابلیت حتماً باید حساب روبیکا داشته باشید.
+            برای استفاده از این قابلیت حتماً باید حساب تلگرام داشته باشید.
           </p>
         </div>
 
@@ -123,9 +119,9 @@ function RubikaGuideModal({ open, onClose, onGoToBot }) {
         <div className="px-5 pt-3 pb-5 border-t border-[color:var(--border)]">
           <button
             onClick={onGoToBot}
-            className="w-full py-3.5 rounded-2xl bg-[var(--rubika)] hover:opacity-90 text-white text-[15px] font-bold transition-opacity"
+            className="w-full py-3.5 rounded-2xl bg-[var(--telegram)] hover:opacity-90 text-white text-[15px] font-bold transition-opacity"
           >
-            رفتن به ربات روبیکا
+            رفتن به ربات تلگرام
           </button>
         </div>
       </div>
@@ -166,6 +162,7 @@ function Chip({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={`flex items-center gap-1 px-3 py-1.5 rounded-[10px] text-xs font-semibold border transition-colors ${
         active
           ? "bg-[var(--brand)] border-[color:var(--brand)] text-white"
@@ -180,42 +177,8 @@ function Chip({ active, onClick, children }) {
 /* ───────── محتوای اصلی ───────── */
 function SettingsContent({ user }) {
   const router = useRouter();
-  const { currency, changeCurrency } = useCurrency();
   const { mode, setMode } = useTheme();
   const [guideOpen, setGuideOpen] = useState(false);
-  const [notifState, setNotifState] = useState("loading");
-  const [toast, setToast] = useState(null);
-
-  const refreshNotif = useCallback(() => {
-    if (typeof Notification === "undefined") return setNotifState("unsupported");
-    setNotifState(Notification.permission === "granted" ? "granted" : "denied");
-  }, []);
-
-  useEffect(() => {
-    refreshNotif();
-    const onVis = () => document.visibilityState === "visible" && refreshNotif();
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [refreshNotif]);
-
-  const showToast = (msg, variant = "success") => {
-    setToast({ msg, variant });
-    setTimeout(() => setToast(null), 3500);
-  };
-
-  const handleNotifications = async () => {
-    if (notifState === "unsupported") return showToast("مرورگر شما از اعلان پشتیبانی نمی‌کند.", "danger");
-    if (notifState === "granted")
-      return showToast("اعلان‌های سابلو فعال است و یادآوری سررسید اقساط برای شما ارسال می‌شود.");
-    const result = await Notification.requestPermission();
-    refreshNotif();
-    if (result === "granted") showToast("از این پس سررسید اقساط و وام‌های شما یادآوری می‌شود.");
-    else
-      showToast(
-        "اجازه‌ی نمایش اعلان داده نشد. اگر قبلاً مسدود کرده‌اید، از تنظیمات مرورگر (آیکن قفل کنار آدرس) آن را فعال کنید.",
-        "danger"
-      );
-  };
 
   const handleLogout = async () => {
     try {
@@ -224,17 +187,10 @@ function SettingsContent({ user }) {
     router.replace("/");
   };
 
-  const openRubikaBot = () => {
+  const openTelegramBot = () => {
     setGuideOpen(false);
-    window.open(RUBIKA_BOT_URL, "_blank", "noopener,noreferrer");
+    window.open(TELEGRAM_BOT_URL, "_blank", "noopener,noreferrer");
   };
-
-  const notifEnabled = notifState === "granted";
-  const notifStatusText =
-    notifState === "loading" ? "..."
-    : notifState === "unsupported" ? "پشتیبانی نمی‌شود"
-    : notifEnabled ? "فعال"
-    : "غیرفعال (برای فعال‌سازی کلیک کنید)";
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">
@@ -262,13 +218,6 @@ function SettingsContent({ user }) {
         </section>
 
         <Row
-          onClick={() => router.push("/cards")}
-          label="مدیریت کارت‌ها"
-          iconBg="--brand-light"
-          icon={<CreditCard size={18} className="text-[color:var(--brand)]" />}
-        />
-
-        <Row
           label="ظاهر برنامه"
           iconBg="--warning-light"
           icon={
@@ -289,38 +238,6 @@ function SettingsContent({ user }) {
           </div>
         </Row>
 
-        <Row label="واحد پول" iconBg="--warning-light" icon={<Coins size={18} className="text-[color:var(--warning)]" />}>
-          <div className="flex gap-1.5">
-            <Chip active={currency === "IRT"} onClick={() => changeCurrency("IRT")}>تومان</Chip>
-            <Chip active={currency === "IRR"} onClick={() => changeCurrency("IRR")}>ریال</Chip>
-          </div>
-        </Row>
-
-        <Row
-          onClick={handleNotifications}
-          label="اعلان‌های مرورگر"
-          iconBg={notifEnabled ? "--brand-light" : "--danger-light"}
-          icon={
-            notifEnabled ? (
-              <BellRing size={18} className="text-[color:var(--brand)]" />
-            ) : (
-              <BellOff size={18} className="text-[color:var(--danger)]" />
-            )
-          }
-          sub={
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className={`w-2 h-2 rounded-full ${notifEnabled ? "bg-[var(--brand)]" : "bg-[var(--danger)]"}`} />
-              <span
-                className={`text-[11px] font-semibold ${
-                  notifEnabled ? "text-[color:var(--brand)]" : "text-[color:var(--danger)]"
-                }`}
-              >
-                {notifStatusText}
-              </span>
-            </div>
-          }
-        />
-
         <Row
           onClick={() => setGuideOpen(true)}
           label="یادآوری سررسید اقساط"
@@ -328,10 +245,10 @@ function SettingsContent({ user }) {
           icon={<Bell size={18} className="text-[color:var(--info)]" />}
           sub={
             <>
-              <div className="text-[11px] text-[color:var(--muted)] mt-0.5">فعال‌سازی در ربات روبیکا</div>
+              <div className="text-[11px] text-[color:var(--muted)] mt-0.5">فعال‌سازی در ربات تلگرام</div>
               <div className="flex items-center gap-1 mt-1">
                 <AlertTriangle size={11} className="text-[color:var(--warning)]" />
-                <span className="text-[10px] font-semibold text-[color:var(--warning)]">نیاز به حساب روبیکا دارد</span>
+                <span className="text-[10px] font-semibold text-[color:var(--warning)]">نیاز به حساب تلگرام دارد</span>
               </div>
             </>
           }
@@ -348,17 +265,7 @@ function SettingsContent({ user }) {
         </div>
       </main>
 
-      <RubikaGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} onGoToBot={openRubikaBot} />
-
-      {toast && (
-        <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] max-w-sm w-[90%] px-4 py-3 rounded-xl text-xs font-semibold leading-5 shadow-lg text-white ${
-            toast.variant === "danger" ? "bg-[var(--danger)]" : "bg-[var(--brand)]"
-          }`}
-        >
-          {toast.msg}
-        </div>
-      )}
+      <TelegramGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} onGoToBot={openTelegramBot} />
     </div>
   );
 }
@@ -375,7 +282,7 @@ export default function SettingsPage() {
       .then((res) => setUser(res.data.user))
       .catch(() => router.push("/"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
@@ -385,9 +292,5 @@ export default function SettingsPage() {
     );
   }
 
-  return (
-    <CurrencyProvider initialCurrency={user?.currency ?? "IRT"}>
-      <SettingsContent user={user} />
-    </CurrencyProvider>
-  );
+  return <SettingsContent user={user} />;
 }
