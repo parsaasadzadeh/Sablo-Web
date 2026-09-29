@@ -2,68 +2,70 @@
 import { Trash2, Target, TrendingUp, Clock } from "lucide-react";
 
 export default function GoalCard({ goal, display, unit, onDelete }) {
-  const statusColor = goal.isCompleted
-    ? "#059669"
+  // رنگ وضعیت از متغیرهای تم خوانده می‌شه
+  const statusVar = goal.isCompleted
+    ? "var(--success)"
     : goal.isExpired
-    ? "#E11D48"
-    : "#0F6F5C";
+    ? "var(--danger)"
+    : "var(--brand)";
 
   const deadlineDate = new Date(goal.deadline).toLocaleDateString("fa-IR");
   const percent = Math.min(100, goal.percent);
 
   return (
-    <div className="bg-white rounded-2xl border border-[#EDE8DC] p-5 mb-4">
+    <div className="bg-[var(--card)] rounded-2xl border border-[color:var(--border)] p-5 mb-4">
       {/* هدر */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => onDelete(goal._id)}
-          className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors"
+          aria-label="حذف هدف"
+          className="p-2 rounded-xl bg-[var(--danger-light)] hover:bg-[color-mix(in_srgb,var(--danger)_20%,transparent)] text-[color:var(--danger)] transition-colors"
         >
           <Trash2 size={15} />
         </button>
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-bold text-[#26241F]">{goal.title}</h4>
+          <h4 className="text-sm font-bold text-[color:var(--ink)]">{goal.title}</h4>
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${statusColor}18` }}
+            style={{ backgroundColor: `color-mix(in srgb, ${statusVar} 12%, transparent)` }}
           >
-            <Target size={16} style={{ color: statusColor }} />
+            <Target size={16} style={{ color: statusVar }} />
           </div>
         </div>
       </div>
 
       {/* نوار پیشرفت */}
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-xs font-bold" style={{ color: statusColor }}>
+        <span className="text-xs font-bold" style={{ color: statusVar }}>
           {percent}٪
         </span>
-        <div className="flex-1 h-2 bg-[#EDE8DC] rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-[var(--border)] rounded-full overflow-hidden">
           <div
             className="h-2 rounded-full transition-all duration-500"
-            style={{ width: `${percent}%`, backgroundColor: statusColor }}
+            style={{ width: `${percent}%`, backgroundColor: statusVar }}
           />
         </div>
       </div>
 
       {/* مبالغ */}
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="text-center p-2 bg-emerald-50 rounded-xl">
-          <p className="text-[10px] text-[#8A8273] mb-1">پس‌انداز شده</p>
-          <p className="text-xs font-bold text-emerald-600 tabular">
+        <div className="text-center p-2 bg-[var(--success-light)] rounded-xl">
+          <p className="text-[10px] text-[color:var(--muted)] mb-1">پس‌انداز شده</p>
+          <p className="text-xs font-bold text-[color:var(--success)] tabular">
             {display(goal.savedAmount)}
             <span className="text-[9px] font-normal"> {unit}</span>
           </p>
         </div>
-        <div className="text-center p-2 bg-rose-50 rounded-xl">
-          <p className="text-[10px] text-[#8A8273] mb-1">باقی‌مانده</p>
-          <p className="text-xs font-bold text-rose-600 tabular">
+        <div className="text-center p-2 bg-[var(--danger-light)] rounded-xl">
+          <p className="text-[10px] text-[color:var(--muted)] mb-1">باقی‌مانده</p>
+          <p className="text-xs font-bold text-[color:var(--danger)] tabular">
             {display(goal.remaining)}
             <span className="text-[9px] font-normal"> {unit}</span>
           </p>
         </div>
-        <div className="text-center p-2 bg-[#F7F4EE] rounded-xl">
-          <p className="text-[10px] text-[#8A8273] mb-1">هدف</p>
-          <p className="text-xs font-bold text-[#26241F] tabular">
+        <div className="text-center p-2 bg-[var(--bg)] rounded-xl">
+          <p className="text-[10px] text-[color:var(--muted)] mb-1">هدف</p>
+          <p className="text-xs font-bold text-[color:var(--ink)] tabular">
             {display(goal.targetAmount)}
             <span className="text-[9px] font-normal"> {unit}</span>
           </p>
@@ -71,29 +73,29 @@ export default function GoalCard({ goal, display, unit, onDelete }) {
       </div>
 
       {/* فوتر */}
-      <div className="flex items-center justify-between pt-3 border-t border-[#EDE8DC]">
-        <div className="flex items-center gap-1 text-[#8A8273]">
+      <div className="flex items-center justify-between pt-3 border-t border-[color:var(--border)]">
+        <div className="flex items-center gap-1 text-[color:var(--muted)]">
           <Clock size={12} />
           <span className="text-xs">ددلاین: {deadlineDate}</span>
         </div>
 
         {goal.isCompleted ? (
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg">
+          <span className="text-xs font-bold text-[color:var(--success)] bg-[var(--success-light)] px-3 py-1 rounded-lg">
             🎉 به هدف رسیدی!
           </span>
         ) : goal.isExpired ? (
-          <span className="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-lg">
+          <span className="text-xs font-bold text-[color:var(--danger)] bg-[var(--danger-light)] px-3 py-1 rounded-lg">
             منقضی شده
           </span>
         ) : goal.predictedMonths !== null ? (
-          <div className="flex items-center gap-1 text-[#0F6F5C]">
+          <div className="flex items-center gap-1 text-[color:var(--brand)]">
             <TrendingUp size={12} />
             <span className="text-xs font-bold">
               پیش‌بینی: {goal.predictedMonths} ماه دیگه
             </span>
           </div>
         ) : (
-          <span className="text-xs text-[#8A8273]">در حال محاسبه...</span>
+          <span className="text-xs text-[color:var(--muted)]">در حال محاسبه...</span>
         )}
       </div>
     </div>
