@@ -17,12 +17,12 @@ export default function LoanCard({ loan, display, unit, onPay, onDelete }) {
   const [payTargetId, setPayTargetId] = useState(null);
 
   const progressColor = loan.isFullyPaid
-    ? "bg-emerald-500"
+    ? "bg-[var(--emerald-mid)]"
     : loan.progressPercent >= 75
-    ? "bg-blue-500"
+    ? "bg-[var(--info)]"
     : loan.progressPercent >= 40
-    ? "bg-[#0F6F5C]"
-    : "bg-amber-500";
+    ? "bg-[var(--brand)]"
+    : "bg-[var(--amber-mid)]";
 
   // کلیک روی پرداخت → اگه کارت داره modal بیاد، نداره مستقیم پرداخت
   const handlePayPress = (installmentId) => {
@@ -40,27 +40,30 @@ export default function LoanCard({ loan, display, unit, onPay, onDelete }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-[#EDE8DC] overflow-hidden mb-4">
+      <div className="bg-[var(--card)] rounded-2xl border border-[color:var(--border)] overflow-hidden mb-4">
 
         {/* هدر */}
         <div className="p-4">
           <div className="flex items-start justify-between mb-3">
             <div className="text-right">
-              <h3 className="text-sm font-bold text-[#26241F]">{loan.title}</h3>
+              <h3 className="text-sm font-bold text-[color:var(--ink)]">{loan.title}</h3>
               {loan.description && (
-                <p className="text-xs text-[#8A8273] mt-0.5">{loan.description}</p>
+                <p className="text-xs text-[color:var(--muted)] mt-0.5">{loan.description}</p>
               )}
-              <p className="text-xs text-[#8A8273] mt-1">از {formatJalali(loan.date)}</p>
+              <p className="text-xs text-[color:var(--muted)] mt-1">از {formatJalali(loan.date)}</p>
             </div>
             <div className="flex items-center gap-2">
               {loan.isFullyPaid && (
-                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                <span className="flex items-center gap-1 text-[10px] font-bold text-[color:var(--emerald-text)] bg-[var(--emerald-bg)] px-2 py-1 rounded-full">
                   <CheckCircle size={10} /> تسویه شده
                 </span>
               )}
-              <button onClick={() => onDelete(loan)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-rose-50 transition-colors">
-                <Trash2 size={14} className="text-rose-400" />
+              <button
+                onClick={() => onDelete(loan)}
+                aria-label="حذف وام"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[var(--rose-bg)] transition-colors"
+              >
+                <Trash2 size={14} className="text-[color:var(--rose-mid)]" />
               </button>
             </div>
           </div>
@@ -68,30 +71,32 @@ export default function LoanCard({ loan, display, unit, onPay, onDelete }) {
           {/* progress bar */}
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[11px] text-[#8A8273]">
+              <span className="text-[11px] text-[color:var(--muted)]">
                 {loan.paidCount} از {loan.installmentCount} قسط پرداخت شده
               </span>
-              <span className="text-[11px] font-bold text-[#26241F]">{loan.progressPercent}٪</span>
+              <span className="text-[11px] font-bold text-[color:var(--ink)]">{loan.progressPercent}٪</span>
             </div>
-            <div className="h-2 bg-[#F7F4EE] rounded-full overflow-hidden">
-              <div className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
-                style={{ width: `${loan.progressPercent}%` }} />
+            <div className="h-2 bg-[var(--bg)] border border-[color:var(--border)] rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+                style={{ width: `${loan.progressPercent}%` }}
+              />
             </div>
           </div>
 
           {/* خلاصه مالی */}
           <div className="flex flex-row-reverse gap-2 mb-3">
-            <div className="flex-1 bg-[#F7F4EE] rounded-xl p-2.5 text-center">
-              <p className="text-[10px] text-[#8A8273] mb-0.5">پرداخت شده</p>
-              <p className="text-xs font-bold text-emerald-600">{display(loan.paidAmount)} {unit}</p>
+            <div className="flex-1 bg-[var(--bg)] rounded-xl p-2.5 text-center">
+              <p className="text-[10px] text-[color:var(--muted)] mb-0.5">پرداخت شده</p>
+              <p className="text-xs font-bold text-[color:var(--emerald-mid)]">{display(loan.paidAmount)} {unit}</p>
             </div>
-            <div className="flex-1 bg-[#F7F4EE] rounded-xl p-2.5 text-center">
-              <p className="text-[10px] text-[#8A8273] mb-0.5">مانده</p>
-              <p className="text-xs font-bold text-rose-500">{display(loan.remainingAmount)} {unit}</p>
+            <div className="flex-1 bg-[var(--bg)] rounded-xl p-2.5 text-center">
+              <p className="text-[10px] text-[color:var(--muted)] mb-0.5">مانده</p>
+              <p className="text-xs font-bold text-[color:var(--rose-mid)]">{display(loan.remainingAmount)} {unit}</p>
             </div>
-            <div className="flex-1 bg-[#F7F4EE] rounded-xl p-2.5 text-center">
-              <p className="text-[10px] text-[#8A8273] mb-0.5">هر قسط</p>
-              <p className="text-xs font-bold text-[#26241F]">
+            <div className="flex-1 bg-[var(--bg)] rounded-xl p-2.5 text-center">
+              <p className="text-[10px] text-[color:var(--muted)] mb-0.5">هر قسط</p>
+              <p className="text-xs font-bold text-[color:var(--ink)]">
                 {display(loan.installments[0]?.amount ?? 0)} {unit}
               </p>
             </div>
@@ -99,16 +104,16 @@ export default function LoanCard({ loan, display, unit, onPay, onDelete }) {
 
           {/* قسط بعدی */}
           {loan.nextInstallment && !loan.isFullyPaid && (
-            <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
+            <div className="flex items-center justify-between bg-[var(--warning-light)] border border-[color:var(--warning-border)] rounded-xl px-3 py-2.5">
               <button
                 onClick={() => handlePayPress(loan.nextInstallment._id)}
-                className="flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors"
+                className="flex items-center gap-1.5 bg-[var(--emerald-mid)] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
               >
                 <CheckCircle size={12} /> پرداخت قسط
               </button>
               <div className="text-right">
-                <p className="text-xs font-bold text-amber-800">قسط بعدی</p>
-                <p className="text-[11px] text-amber-700 flex items-center gap-1 justify-end">
+                <p className="text-xs font-bold text-[color:var(--amber-text)]">قسط بعدی</p>
+                <p className="text-[11px] text-[color:var(--amber-text)] opacity-80 flex items-center gap-1 justify-end">
                   <Clock size={10} /> {formatJalali(loan.nextInstallment.dueDate)}
                 </p>
               </div>
@@ -117,8 +122,10 @@ export default function LoanCard({ loan, display, unit, onPay, onDelete }) {
         </div>
 
         {/* دکمه نمایش اقساط */}
-        <button onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-center gap-1.5 py-2.5 border-t border-[#EDE8DC] text-xs font-semibold text-[#8A8273] hover:bg-[#F7F4EE] transition-colors">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-center gap-1.5 py-2.5 border-t border-[color:var(--border)] text-xs font-semibold text-[color:var(--muted)] hover:bg-[var(--hover)] transition-colors"
+        >
           {expanded
             ? <><ChevronUp size={14} /> بستن اقساط</>
             : <><ChevronDown size={14} /> نمایش همه اقساط ({loan.installmentCount})</>}
@@ -126,28 +133,30 @@ export default function LoanCard({ loan, display, unit, onPay, onDelete }) {
 
         {/* لیست اقساط */}
         {expanded && (
-          <div className="border-t border-[#EDE8DC] divide-y divide-[#F7F4EE]">
+          <div className="border-t border-[color:var(--border)] divide-y divide-[color:var(--border)]">
             {loan.installments.map((inst, i) => (
-              <div key={inst._id}
-                className={`flex items-center justify-between px-4 py-3 ${inst.isPaid ? "opacity-50" : ""}`}>
+              <div
+                key={inst._id}
+                className={`flex items-center justify-between px-4 py-3 ${inst.isPaid ? "opacity-50" : ""}`}
+              >
                 <div className="text-right">
-                  <p className="text-xs font-semibold text-[#26241F]">قسط {i + 1}</p>
-                  <p className="text-[10px] text-[#8A8273]">سررسید: {formatJalali(inst.dueDate)}</p>
+                  <p className="text-xs font-semibold text-[color:var(--ink)]">قسط {i + 1}</p>
+                  <p className="text-[10px] text-[color:var(--muted)]">سررسید: {formatJalali(inst.dueDate)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {inst.isPaid ? (
-                    <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
+                    <span className="flex items-center gap-1 text-[10px] text-[color:var(--emerald-mid)] font-semibold">
                       <CheckCircle size={11} /> پرداخت شده
                     </span>
                   ) : (
                     <button
                       onClick={() => handlePayPress(inst._id)}
-                      className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors"
+                      className="text-[10px] font-bold text-[color:var(--emerald-text)] bg-[var(--emerald-bg)] px-2.5 py-1 rounded-lg hover:opacity-80 transition-opacity"
                     >
                       پرداخت
                     </button>
                   )}
-                  <p className="text-xs font-bold text-[#26241F]">{display(inst.amount)}</p>
+                  <p className="text-xs font-bold text-[color:var(--ink)]">{display(inst.amount)}</p>
                 </div>
               </div>
             ))}
