@@ -8,23 +8,30 @@ export default function StatsGrid({ summary }) {
 
   return (
     <>
-      <div className={`mb-6 border rounded-2xl p-4 flex gap-3 items-start transition-all duration-300`}>
+      {/* بنر وضعیت — قبلاً رنگ پس‌زمینه و بردر نداشت؛ حالا مثل اپ رنگی است */}
+      <div
+        className={`mb-6 border rounded-2xl p-4 flex gap-3 items-start transition-all duration-300 ${
+          isNegative
+            ? "bg-[var(--amber-bg)] border-[color:var(--amber-mid)]/40"
+            : "bg-[var(--emerald-bg)] border-[color:var(--emerald-mid)]/40"
+        }`}
+      >
         {isNegative ? (
           <>
-            <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={20} />
+            <AlertTriangle className="text-[color:var(--amber-mid)] shrink-0 mt-0.5" size={20} />
             <div>
-              <h4 className="text-sm font-bold text-amber-900">تراز مالی منفی است!</h4>
-              <p className="text-xs text-amber-700 mt-1 leading-5">
+              <h4 className="text-sm font-bold text-[color:var(--amber-text)]">تراز مالی منفی است!</h4>
+              <p className="text-xs text-[color:var(--amber-text)] opacity-80 mt-1 leading-5">
                 {display(Math.abs(summary.cashBalance))} {unit} کسری بودجه دارید.
               </p>
             </div>
           </>
         ) : (
           <>
-            <ShieldCheck className="text-emerald-600 shrink-0 mt-0.5" size={20} />
+            <ShieldCheck className="text-[color:var(--emerald-mid)] shrink-0 mt-0.5" size={20} />
             <div>
-              <h4 className="text-sm font-bold text-emerald-900">وضعیت مالی پایدار</h4>
-              <p className="text-xs text-emerald-700 mt-1">
+              <h4 className="text-sm font-bold text-[color:var(--emerald-text)]">وضعیت مالی پایدار</h4>
+              <p className="text-xs text-[color:var(--emerald-text)] opacity-80 mt-1">
                 {display(summary.cashBalance)} {unit} نقدینگی دارید.
               </p>
             </div>
@@ -33,7 +40,12 @@ export default function StatsGrid({ summary }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className={`text-white p-5 rounded-2xl shadow-sm transition-colors ${!isNegative ? "bg-[#0F6F5C]" : "bg-rose-700"}`}>
+        {/* موجودی خالص */}
+        <div
+          className={`text-white p-5 rounded-2xl shadow-sm transition-colors ${
+            !isNegative ? "bg-[var(--brand)]" : "bg-[var(--rose-mid)]"
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs opacity-90">موجودی خالص</span>
             <TrendingUp size={18} className="opacity-90" />
@@ -44,39 +56,42 @@ export default function StatsGrid({ summary }) {
           </h2>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#EDE8DC] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+        {/* درآمد */}
+        <div className="bg-[var(--card)] p-5 rounded-2xl border border-[color:var(--border)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--emerald-bg)] text-[color:var(--emerald-mid)] flex items-center justify-center shrink-0">
             <ArrowUpCircle size={20} />
           </div>
           <div>
-            <span className="text-[11px] text-[#8A8273] block">کل درآمدهای خالص</span>
-            <span className="text-base font-bold text-[#26241F] tabular">
+            <span className="text-[11px] text-[color:var(--muted)] block">کل درآمدهای خالص</span>
+            <span className="text-base font-bold text-[color:var(--ink)] tabular">
               {display(summary.totalIncome)}{" "}
               <span className="text-[10px] font-normal">{unit}</span>
             </span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#EDE8DC] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+        {/* مخارج */}
+        <div className="bg-[var(--card)] p-5 rounded-2xl border border-[color:var(--border)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--rose-bg)] text-[color:var(--rose-mid)] flex items-center justify-center shrink-0">
             <ArrowDownCircle size={20} />
           </div>
           <div>
-            <span className="text-[11px] text-[#8A8273] block">کل مخارج خالص</span>
-            <span className="text-base font-bold text-[#26241F] tabular">
+            <span className="text-[11px] text-[color:var(--muted)] block">کل مخارج خالص</span>
+            <span className="text-base font-bold text-[color:var(--ink)] tabular">
               {display(summary.totalExpense)}{" "}
               <span className="text-[10px] font-normal">{unit}</span>
             </span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#EDE8DC] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+        {/* بدهی */}
+        <div className="bg-[var(--card)] p-5 rounded-2xl border border-[color:var(--border)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--amber-bg)] text-[color:var(--amber-mid)] flex items-center justify-center shrink-0">
             <HelpCircle size={20} />
           </div>
           <div>
-            <span className="text-[11px] text-[#8A8273] block">بدهی باقی‌مانده (وام)</span>
-            <span className="text-base font-bold text-amber-700 tabular">
+            <span className="text-[11px] text-[color:var(--muted)] block">بدهی باقی‌مانده (وام)</span>
+            <span className="text-base font-bold text-[color:var(--amber-text)] tabular">
               {display(summary.activeDebt)}{" "}
               <span className="text-[10px] font-normal">{unit}</span>
             </span>
