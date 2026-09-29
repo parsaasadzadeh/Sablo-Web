@@ -10,7 +10,7 @@ import AuthRedirect from "@/components/AuthRedirect";
 
 export default function Home() {
   return (
-    <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] font-sans text-[#26241F]">
+    <div dir="rtl" lang="fa" className="min-h-screen bg-[var(--bg)] font-sans text-[color:var(--ink)]">
        <AuthRedirect />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
