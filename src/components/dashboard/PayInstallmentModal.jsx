@@ -2,7 +2,16 @@
 import { useEffect } from "react";
 import { Ban, X } from "lucide-react";
 
-export default function PayInstallmentModal({ visible, onClose, onConfirm, cards = [] }) {
+export default function PayInstallmentModal({
+  visible,
+  onClose,
+  onConfirm,
+  cards = [],
+  // اختیاری: برای استفاده‌ی مجدد در واریز به هدف (پیش‌فرض‌ها همان پرداخت قسط هستند)
+  title = "پرداخت از کدام کارت؟",
+  subtitle = "یک کارت رو انتخاب کن، یا بدون ثبت کارت پرداخت رو تایید کن",
+  children = null,
+}) {
   // بستن با Escape و قفل اسکرول صفحه‌ی پشت مودال
   useEffect(() => {
     if (!visible) return;
@@ -34,11 +43,12 @@ export default function PayInstallmentModal({ visible, onClose, onConfirm, cards
           <button onClick={onClose} aria-label="بستن" className="p-1 rounded-full hover:bg-[var(--hover)]">
             <X size={18} className="text-[color:var(--muted)]" />
           </button>
-          <h3 className="text-sm font-bold text-[color:var(--ink)]">پرداخت از کدام کارت؟</h3>
+          <h3 className="text-sm font-bold text-[color:var(--ink)]">{title}</h3>
         </div>
-        <p className="text-[11px] text-[color:var(--muted)] text-right mb-4">
-          یک کارت رو انتخاب کن، یا بدون ثبت کارت پرداخت رو تایید کن
-        </p>
+        <p className="text-[11px] text-[color:var(--muted)] text-right mb-4">{subtitle}</p>
+
+        {/* محتوای اضافه (مثلاً فیلد مبلغ در واریز به هدف) */}
+        {children}
 
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {cards.map((card) => (
