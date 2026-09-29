@@ -1,7 +1,7 @@
 "use client";
 import { Trash2, Target, TrendingUp, Clock } from "lucide-react";
 
-export default function GoalCard({ goal, display, unit, onDelete }) {
+export default function GoalCard({ goal, display, unit, onDelete, onDeposit }) {
   // رنگ وضعیت از متغیرهای تم خوانده می‌شه
   const statusVar = goal.isCompleted
     ? "var(--success)"
@@ -73,12 +73,26 @@ export default function GoalCard({ goal, display, unit, onDelete }) {
       </div>
 
       {/* فوتر */}
-      <div className="flex items-center justify-between pt-3 border-t border-[color:var(--border)]">
-        <div className="flex items-center gap-1 text-[color:var(--muted)]">
-          <Clock size={12} />
-          <span className="text-xs">ددلاین: {deadlineDate}</span>
+      <div className="flex items-start justify-between pt-3 border-t border-[color:var(--border)]">
+        {/* ستون راست: ددلاین + دکمه‌ی واریز زیرش */}
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex items-center gap-1 text-[color:var(--muted)]">
+            <Clock size={12} />
+            <span className="text-xs">ددلاین: {deadlineDate}</span>
+          </div>
+
+          {!goal.isCompleted && onDeposit && (
+            <button
+              type="button"
+              onClick={() => onDeposit(goal)}
+              className="bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white text-[11px] font-bold rounded-xl px-3.5 py-1.5 transition-colors"
+            >
+              + واریز به این هدف
+            </button>
+          )}
         </div>
 
+        {/* ستون چپ: وضعیت */}
         {goal.isCompleted ? (
           <span className="text-xs font-bold text-[color:var(--success)] bg-[var(--success-light)] px-3 py-1 rounded-lg">
             🎉 به هدف رسیدی!
