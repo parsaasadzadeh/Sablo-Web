@@ -10,7 +10,6 @@ const ITEMS = [
   { label: "کارت‌ها", icon: CreditCard, path: "/cards" },
   { label: "تنظیمات", icon: Settings, path: "/settings" },
 ];
-
 export default function QuickNav() {
   return (
     <nav
