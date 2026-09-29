@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,12 +16,12 @@ export default function ReportsContent() {
 
   const [period, setPeriod] = useState({ isAll: true, label: "همه‌ی زمان‌ها" });
 
-  const from = period.isAll ? undefined : period.from;
-  const to   = period.isAll ? undefined : period.to;
+  const from   = period.isAll ? undefined : period.from;
+  const to     = period.isAll ? undefined : period.to;
   const cardId = activeCard?._id ?? undefined;
 
   return (
-    <div dir="rtl" lang="fa" className="min-h-screen bg-[#F7F4EE] p-4 sm:p-8 font-sans">
+    <div dir="rtl" lang="fa" className="min-h-screen bg-[var(--bg)] p-4 sm:p-8 font-sans">
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap'); .font-sans { font-family: 'Vazirmatn', sans-serif; }`}</style>
 
       <div className="max-w-2xl mx-auto">
@@ -30,15 +29,15 @@ export default function ReportsContent() {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 text-sm text-[#8A8273] hover:text-[#26241F]"
+            className="flex items-center gap-2 text-sm text-[color:var(--muted)] hover:text-[color:var(--ink)] transition-colors"
           >
             <ArrowRight size={16} /> بازگشت
           </button>
-          <h1 className="text-xl font-bold text-[#26241F]">گزارش‌های مالی</h1>
+          <h1 className="text-xl font-bold text-[color:var(--ink)]">گزارش‌های مالی</h1>
           <div />
         </div>
 
-        {/* بنر کارت فعال */}
+        {/* بنر کارت فعال (رنگ از خود کارت می‌آید) */}
         {activeCard && (
           <div
             className="flex items-center gap-3 rounded-2xl px-4 py-3 mb-5 text-white text-sm font-semibold"
@@ -51,8 +50,8 @@ export default function ReportsContent() {
 
         <MonthSelector display={display} unit={unit} onPeriodChange={setPeriod} cardId={cardId} />
 
-        <ChartDonut    display={display} unit={unit} from={from} to={to} cardId={cardId} />
-        <CategoryDonut display={display} unit={unit} from={from} to={to} cardId={cardId} />
+        <ChartDonut       display={display} unit={unit} from={from} to={to} cardId={cardId} />
+        <CategoryDonut    display={display} unit={unit} from={from} to={to} cardId={cardId} />
         <MonthlyComparison display={display} unit={unit} cardId={cardId} />
       </div>
     </div>
