@@ -11,20 +11,11 @@ import { useCurrency } from "@/context/currencyContext";
 import { useCard } from "@/context/cardContext";
 import { useTheme } from "@/context/themeContext";
 import GoalCard from "@/components/reports/GoalCard";
-import PayInstallmentModal from "@/components/dashboard/PayInstallmentModal";
+import DepositToGoalModal from "@/components/reports/DepositToGoalModal";
 
 const LABEL = "block text-xs font-medium text-[color:var(--ink-light)] mb-1.5 text-right";
 const INPUT =
   "w-full text-sm bg-[var(--input-bg)] border border-[color:var(--input-border)] rounded-xl px-3.5 py-2.5 outline-none focus:border-[color:var(--brand)] text-[color:var(--ink)] placeholder:text-[color:var(--muted-light)] text-right";
-
-const formatAmount = (value) => {
-  const digitsOnly = String(value ?? "").replace(/[^\d]/g, "");
-  return digitsOnly ? Number(digitsOnly).toLocaleString("en-US") : "";
-};
-const unformatAmount = (value) => {
-  const digitsOnly = String(value ?? "").replace(/[^\d]/g, "");
-  return digitsOnly ? Number(digitsOnly) : 0;
-};
 
 export default function GoalsContent() {
   const router = useRouter();
@@ -40,10 +31,8 @@ export default function GoalsContent() {
   const [amount, setAmount] = useState("");
   const [deadline, setDeadline] = useState("");
 
-  // ── واریز به هدف ──
-  const [depositGoal,   setDepositGoal]   = useState(null); // هدفی که مودال برایش باز است
-  const [depositAmount, setDepositAmount] = useState("");
-  const [depositError,  setDepositError]  = useState(null);
+  // هدفی که مودال واریز برایش باز است
+  const [depositGoal, setDepositGoal] = useState(null);
 
   const fetchGoals = async () => {
     try {
@@ -89,39 +78,6 @@ export default function GoalsContent() {
       setGoals((prev) => prev.filter((g) => g._id !== id));
     } catch {
       alert("خطا در حذف هدف");
-    }
-  };
-
-  const openDeposit = (goal) => {
-    setDepositGoal(goal);
-    setDepositAmount("");
-    setDepositError(null);
-  };
-
-  const closeDeposit = () => {
-    setDepositGoal(null);
-    setDepositAmount("");
-    setDepositError(null);
-  };
-
-  // ── انتخاب کارت در PayInstallmentModal = تأیید واریز ──
-  // ⚠️ مسیر و بدنه‌ی درخواست را با API بک‌اند / نسخه‌ی موبایل خودتان هماهنگ کنید
-  const handleConfirmDeposit = async (cardId) => {
-    const value = unformatAmount(depositAmount);
-    if (value <= 0) {
-      setDepositError("مبلغ واریز را وارد کنید");
-      return; // مودال باز می‌ماند
-    }
-    const amountInRial = currency === "IRT" ? value * 10 : value;
-    try {
-      await api.post(`/goals/${depositGoal._id}/deposit`, {
-        amount: amountInRial,
-        cardId: cardId ?? null,
-      });
-      closeDeposit();
-      fetchGoals();
-    } catch (err) {
-      setDepositError(err.response?.data?.message || "خطا در واریز به هدف");
     }
   };
 
@@ -244,38 +200,26 @@ export default function GoalsContent() {
               display={display}
               unit={unit}
               onDelete={handleDelete}
-              onDeposit={openDeposit}
+              onDeposit={setDepositGoal}
             />
           ))
         )}
       </div>
 
-      {/* واریز به هدف: همان مودال انتخاب کارت پرداخت قسط */}
-      <PayInstallmentModal
+      {/* واریز به هدف — مودال اختصاصی (معادل DepositToGoalModal در موبایل) */}
+      <DepositToGoalModal
+        key={depositGoal?._id ?? "closed"}
         visible={Boolean(depositGoal)}
-        onClose={closeDeposit}
-        onConfirm={handleConfirmDeposit}
+        onClose={() => setDepositGoal(null)}
+        onSuccess={fetchGoals}
+        goalId={depositGoal?._id}
+        goalTitle={depositGoal?.title ?? ""}
+        unit={unit}
+        currency={currency}
         cards={cards}
-        title="واریز به هدف از کدام کارت؟"
-        subtitle={depositGoal ? `هدف «${depositGoal.title}» — مبلغ رو وارد کن و کارت رو انتخاب کن` : ""}
-      >
-        <div className="mb-4">
-          <label className={LABEL}>مبلغ واریز ({unit})</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            dir="ltr"
-            autoFocus
-            placeholder="مثال: 5,000,000"
-            value={depositAmount}
-            onChange={(e) => { setDepositAmount(formatAmount(e.target.value)); setDepositError(null); }}
-            className={`${INPUT} tracking-wider text-left`}
-          />
-          {depositError && (
-            <p className="text-xs text-[color:var(--danger)] text-right mt-2">{depositError}</p>
-          )}
-        </div>
-      </PayInstallmentModal>
+        remaining={depositGoal?.remaining}
+        display={display}
+      />
     </div>
   );
 }
