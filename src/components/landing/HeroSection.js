@@ -1,7 +1,11 @@
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+"use client";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HeroSection() {
+  const { isLoggedIn } = useAuth();
+
   return (
     <section className="text-center max-w-3xl mx-auto mb-20">
       <span className="inline-block bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold px-3 py-1 rounded-full mb-4">
@@ -14,10 +18,17 @@ export default function HeroSection() {
         بیشتر آدم‌ها دخل و خرجشان را گم می‌کنند، چون سیستم‌های سنتی نمی‌فهمند فرقِ «وام» با «خرج روزمره» چیست! با سابلو، دخل، خرج، اقساط و بدهی‌هایت را به سادگیِ یک آب خوردن مدیریت کن و هیچ‌وقت گیج نشو.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Link href="/login" className="w-full sm:w-auto h-12 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white text-xs font-bold px-8 rounded-xl transition-all shadow flex items-center justify-center gap-2">
-        ورود  <ArrowRight size={16} />
+        <Link
+          href={isLoggedIn ? "/dashboard" : "/login"}
+          className="w-full sm:w-auto h-12 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white text-xs font-bold px-8 rounded-xl transition-all shadow flex items-center justify-center gap-2"
+        >
+          {isLoggedIn ? "ورود به داشبورد" : "ورود"}
+          <ArrowRight size={16} />
         </Link>
-        <a href="#features" className="w-full sm:w-auto h-12 bg-white border border-[#EDE8DC] hover:bg-gray-50 text-xs font-semibold px-8 rounded-xl transition-all flex items-center justify-center">
+        <a
+          href="#features"
+          className="w-full sm:w-auto h-12 bg-white border border-[#EDE8DC] hover:bg-gray-50 text-xs font-semibold px-8 rounded-xl transition-all flex items-center justify-center"
+        >
           بیشتر بدانید
         </a>
       </div>
