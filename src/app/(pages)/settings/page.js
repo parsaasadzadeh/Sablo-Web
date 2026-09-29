@@ -411,7 +411,6 @@ function SettingsContent({ user }) {
     </div>
   );
 }
-
 /* ───────── صفحه ───────── */
 export default function SettingsPage() {
   const router = useRouter();
