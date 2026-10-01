@@ -2,12 +2,16 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import DatePicker from "react-multi-date-picker";
+import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
+import gregorian from "react-date-object/calendars/gregorian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import "react-multi-date-picker/styles/backgrounds/bg-dark.css";
 import { useCurrency } from "@/context/currencyContext";
 import { useTheme } from "@/context/themeContext";
 import api from "@/lib/axios";
+
+const MAX_INSTALLMENTS = 360;
 
 const formatAmount = (value) => {
   if (!value && value !== 0) return "";
@@ -19,6 +23,33 @@ const formatAmount = (value) => {
 const unformatAmount = (value) => {
   const digitsOnly = String(value ?? "").replace(/[^\d]/g, "");
   return digitsOnly ? Number(digitsOnly) : 0;
+};
+
+// ---------------------------------------------------------------------
+// ساخت تاریخ سررسید همه اقساط با تقویم شمسی
+// first: DateObject شمسی که DatePicker می‌دهد
+// - هر قسط یک ماه شمسی بعد از قبلی، در همان روز از ماه
+// - اگه ماه مقصد روز کمتری داشت (مثلاً ۳۱ در ماه ۳۰ روزه یا اسفند) به آخرین روز همان ماه می‌ره
+// - خروجی: ISO نیمه‌شب UTC، دقیقاً هم‌فرمت با اپ موبایل (PersianDatePicker) و تراکنش‌ها
+// ---------------------------------------------------------------------
+const buildInstallmentDates = (first, count) => {
+  const startYear = first.year;
+  const startMonth = first.month.number; // ۱ تا ۱۲
+  const startDay = first.day;
+
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    const m0 = startMonth - 1 + i;
+    const year = startYear + Math.floor(m0 / 12);
+    const month = (m0 % 12) + 1;
+
+    const monthStart = new DateObject({ calendar: persian, year, month, day: 1 });
+    const day = Math.min(startDay, monthStart.month.length);
+
+    const g = new DateObject({ calendar: persian, year, month, day }).convert(gregorian);
+    result.push(new Date(Date.UTC(g.year, g.month.number - 1, g.day, 0, 0, 0, 0)).toISOString());
+  }
+  return result;
 };
 
 const LABEL = "block text-xs font-medium text-[color:var(--ink-light)] mb-1.5 text-right";
@@ -35,15 +66,15 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
   const [totalAmount,       setTotalAmount]       = useState("");
   const [installmentCount,  setInstallmentCount]  = useState("");
   const [installmentAmount, setInstallmentAmount] = useState("");
-  const [firstDueDate,      setFirstDueDate]      = useState(null);
+  const [firstDueDate,      setFirstDueDate]      = useState(null); // DateObject شمسی
   const [description,       setDescription]       = useState("");
   const [loading,           setLoading]           = useState(false);
   const [error,             setError]             = useState(null);
 
-  // محاسبه خودکار مبلغ قسط
-  const handleTotalOrCountChange = (newTotal, newCount) => {
+  // محاسبه خودکار مبلغ هر قسط
+  const recalcInstallment = (newTotal, newCount) => {
     const t = unformatAmount(newTotal);
-    const c = parseInt(newCount) || 0;
+    const c = parseInt(newCount, 10) || 0;
     if (t > 0 && c > 0) {
       setInstallmentAmount(formatAmount(Math.ceil(t / c)));
     }
@@ -52,34 +83,40 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
   const handleTotalChange = (e) => {
     const v = formatAmount(e.target.value);
     setTotalAmount(v);
-    handleTotalOrCountChange(v, installmentCount);
+    recalcInstallment(v, installmentCount);
   };
 
   const handleCountChange = (e) => {
     const v = e.target.value.replace(/[^\d]/g, "");
     setInstallmentCount(v);
-    handleTotalOrCountChange(totalAmount, v);
+    recalcInstallment(totalAmount, v);
   };
 
   const reset = () => {
-    setTitle(""); setTotalAmount(""); setInstallmentCount("");
-    setInstallmentAmount(""); setFirstDueDate(null);
-    setDescription(""); setError(null);
+    setTitle("");
+    setTotalAmount("");
+    setInstallmentCount("");
+    setInstallmentAmount("");
+    setFirstDueDate(null);
+    setDescription("");
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setError(null);
 
     const total   = unformatAmount(totalAmount);
-    const count   = parseInt(installmentCount) || 0;
+    const count   = parseInt(installmentCount, 10) || 0;
     const instAmt = unformatAmount(installmentAmount);
 
-    if (!title.trim())  return setError("نام وام را وارد کنید");
-    if (total <= 0)     return setError("مبلغ کل وام را وارد کنید");
-    if (count < 1)      return setError("تعداد اقساط را وارد کنید");
-    if (instAmt <= 0)   return setError("مبلغ هر قسط را وارد کنید");
-    if (!firstDueDate)  return setError("تاریخ اولین قسط را انتخاب کنید");
+    if (!title.trim())            return setError("نام وام را وارد کنید");
+    if (total <= 0)               return setError("مبلغ کل وام را وارد کنید");
+    if (count < 1)                return setError("تعداد اقساط را وارد کنید");
+    if (count > MAX_INSTALLMENTS) return setError(`تعداد اقساط نمی‌تواند بیشتر از ${MAX_INSTALLMENTS} باشد`);
+    if (instAmt <= 0)             return setError("مبلغ هر قسط را وارد کنید");
+    if (!firstDueDate)            return setError("تاریخ اولین قسط را انتخاب کنید");
 
     const totalInRial   = currency === "IRT" ? total   * 10 : total;
     const instAmtInRial = currency === "IRT" ? instAmt * 10 : instAmt;
@@ -91,7 +128,7 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
         totalAmount:       totalInRial,
         installmentCount:  count,
         installmentAmount: instAmtInRial,
-        firstDueDate:      new Date(firstDueDate).toISOString(),
+        installmentDates:  buildInstallmentDates(firstDueDate, count),
         description:       description.trim(),
       });
       reset();
@@ -189,11 +226,13 @@ export default function CreateLoanModal({ isOpen, onClose, onCreated }) {
               calendar={persian}
               locale={persian_fa}
               value={firstDueDate}
-              onChange={(d) => setFirstDueDate(d?.isValid ? d.toDate() : null)}
+              onChange={(d) => setFirstDueDate(d?.isValid ? d : null)}
               calendarPosition="bottom-right"
               placeholder="انتخاب تاریخ"
             />
-            <p className={`${HINT} mt-1`}>بقیه اقساط هر ماه یه بار از این تاریخ جلو میرن</p>
+            <p className={`${HINT} mt-1`}>
+              بقیه اقساط هر ماه شمسی یک‌بار، در همان روز از ماه، جلو می‌روند
+            </p>
           </div>
 
           {/* توضیحات */}
