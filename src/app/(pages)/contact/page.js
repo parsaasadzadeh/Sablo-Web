@@ -18,19 +18,9 @@ export default function Contact() {
 
   const contactInfo = [
     {
-      icon: "fa-solid fa-phone",
-      label: "تماس تلفنی",
-      value: "09143834148",
-    },
-    {
       icon: "fa-solid fa-envelope",
       label: "ایمیل",
       value: "sablo.finance.ir@gmail.com",
-    },
-    {
-      icon: "fa-solid fa-location-dot",
-      label: "آدرس",
-      value: "IR-UR",
     },
     {
       icon: "fa-solid fa-clock",
