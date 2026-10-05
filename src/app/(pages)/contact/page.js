@@ -94,7 +94,7 @@ export default function Contact() {
               <p className="text-[11px] font-medium text-[#9A8F78] mb-3">ما رو دنبال کنید</p>
               <div className="flex gap-2">
                 <a
-                  href="#"
+                  href="https://www.instagram.com/sablo_finance.ir"
                   className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-[#F7F4EE] text-[#0F6F5C] hover:bg-[#0F6F5C] hover:text-white transition-colors duration-300"
                 >
                   <i className="fa-brands fa-instagram text-sm"></i>
