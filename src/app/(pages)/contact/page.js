@@ -23,6 +23,11 @@ export default function Contact() {
       value: "sablo.finance.ir@gmail.com",
     },
     {
+      icon: "fa-brands fa-instagram",
+      label: "اینستاگرام",
+      value: "@sablo_finance.ir",
+    },
+    {
       icon: "fa-solid fa-clock",
       label: "ساعات پاسخ‌گویی",
       value: "4 شنبه از ساعت 9 تا 6",
