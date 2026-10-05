@@ -25,7 +25,7 @@ export default function Contact() {
     {
       icon: "fa-solid fa-envelope",
       label: "ایمیل",
-      value: "sablo@gmail.com",
+      value: "sablo.finance.ir@gmail.com",
     },
     {
       icon: "fa-solid fa-location-dot",
