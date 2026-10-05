@@ -10,7 +10,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 
-// چهار نوع تراکنشی که سبلو دنبالشون می‌کنه - همون زبان بصری داشبورد، اینجا برای روایت داستان استفاده شده
+// چهار نوع تراکنشی که سابلو دنبالشون می‌کنه - همون زبان بصری داشبورد، اینجا برای روایت داستان استفاده شده
 const TRACK_ITEMS = [
   {
     Icon: ArrowUpCircle,
@@ -42,7 +42,7 @@ const VALUES = [
   {
     Icon: Sparkles,
     title: "ساده، نه ساده‌انگارانه",
-    desc: "قرار نبود یک اکسل پیچیده یا یک اپ حسابداری سنگین بسازیم. سبلو باید توی ۱۰ ثانیه جواب یک سؤال رو بده: «الان دستم چقدر باز است؟»"
+    desc: "قرار نبود یک اکسل پیچیده یا یک اپ حسابداری سنگین بسازیم. سابلو باید توی ۱۰ ثانیه جواب یک سؤال رو بده: «الان دستم چقدر باز است؟»"
   },
   {
     Icon: ShieldCheck,
@@ -52,7 +52,7 @@ const VALUES = [
   {
     Icon: HeartHandshake,
     title: "ساخته‌شده از دلِ یک دغدغه واقعی",
-    desc: "سبلو از سرِ یک نیاز واقعی متولد شد، نه یک ایده روی کاغذ. هر ویژگی‌اش جواب یک مشکل واقعی توی زندگی روزمره‌ست."
+    desc: "سابلو از سرِ یک نیاز واقعی متولد شد، نه یک ایده روی کاغذ. هر ویژگی‌اش جواب یک مشکل واقعی توی زندگی روزمره‌ست."
   }
 ];
 
@@ -72,7 +72,7 @@ export default function AboutPage() {
 
         <div className="relative max-w-3xl mx-auto px-4 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
           <span className="inline-flex items-center gap-1.5 bg-[#0F6F5C]/10 text-[#0F6F5C] text-xs font-semibold px-3.5 py-1.5 rounded-full mb-6">
-            <Sparkles size={13} /> درباره سبلو
+            <Sparkles size={13} /> درباره سابلو
           </span>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-[#26241F] leading-[1.4] sm:leading-[1.3] mb-5">
@@ -80,7 +80,7 @@ export default function AboutPage() {
           </h1>
 
           <p className="text-sm sm:text-base text-[#5C5747] leading-8 max-w-xl mx-auto">
-            سبلو رو ساختیم چون خسته شده بودیم از یادداشت پراکنده روی موبایل، فراموش کردن سررسید قسط‌ها،
+            سابلو رو ساختیم چون خسته شده بودیم از یادداشت پراکنده روی موبایل، فراموش کردن سررسید قسط‌ها،
             و ندونستن اینکه آخر ماه واقعاً چقدر پول دستمونه. یه جای واحد برای دیدن کل تصویر مالی‌مون،
             بدون پیچیدگی‌های اضافه.
           </p>
@@ -90,7 +90,7 @@ export default function AboutPage() {
       {/* داستان */}
       <section className="max-w-3xl mx-auto px-4 sm:px-8 pb-16 sm:pb-20">
         <div className="bg-white border border-[#EDE8DC] rounded-3xl p-6 sm:p-10 shadow-sm">
-          <h2 className="text-lg sm:text-xl font-bold text-[#26241F] mb-4">چرا اصلاً سبلو رو ساختیم؟</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-[#26241F] mb-4">چرا اصلاً سابلو رو ساختیم؟</h2>
           <div className="space-y-4 text-sm sm:text-[15px] text-[#5C5747] leading-8">
             <p>
               همه‌چیز از یک دفترچه یادداشت شروع شد؛ جایی که مخارج روزمره، قسط‌های وام و حقوق ماهانه رو
@@ -103,14 +103,14 @@ export default function AboutPage() {
               بدهی روی دوشمونه. همین‌قدر ساده.
             </p>
             <p>
-              سبلو هنوز هم داره رشد می‌کنه، دقیقاً به همون شکلی که نیازهای واقعی کاربرهاش شکلش می‌دن.
+              سابلو هنوز هم داره رشد می‌کنه، دقیقاً به همون شکلی که نیازهای واقعی کاربرهاش شکلش می‌دن.
               اگه پیشنهادی دارید یا چیزی هست که دوست دارید ببینید، خوشحال می‌شیم بشنویم.
             </p>
           </div>
         </div>
       </section>
 
-      {/* چیزهایی که سبلو دنبالشون می‌کنه */}
+      {/* چیزهایی که سابلو دنبالشون می‌کنه */}
       <section className="max-w-3xl mx-auto px-4 sm:px-8 pb-16 sm:pb-20">
         <h2 className="text-lg sm:text-xl font-bold text-[#26241F] mb-6 text-center">
           همه‌ی گردش مالی‌تون، در یک نگاه
