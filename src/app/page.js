@@ -3,7 +3,6 @@ import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
-import CtaSection from "@/components/landing/CtaSection";
 import Footer from "@/components/landing/Footer";
 import AuthRedirect from "@/components/AuthRedirect";
 
