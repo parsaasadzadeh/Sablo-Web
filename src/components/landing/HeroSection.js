@@ -39,7 +39,7 @@ export default function HeroSection() {
 
               {/* Bazaar */}
               <a
-                href="#"
+                href="https://cafebazaar.ir/app/com.sabloapp.sablo"
                 className="flex items-center justify-center gap-2.5 bg-[#1A1916] hover:bg-[#2e2c28] text-white font-bold px-4 py-3 rounded-xl transition-all shadow-sm text-xs sm:text-sm sm:min-w-[156px]"
               >
                 <span className="flex flex-col items-start leading-tight">
@@ -50,7 +50,7 @@ export default function HeroSection() {
 
               {/* Myket */}
               <a
-                href="#"
+                href="https://myket.ir/app/com.sabloapp.sablo"
                 className="flex items-center justify-center gap-2.5 bg-[#1565D8] hover:bg-[#1255BB] text-white font-bold px-4 py-3 rounded-xl transition-all shadow-sm text-xs sm:text-sm sm:min-w-[156px]"
               >
                 <span className="flex flex-col items-start leading-tight">
@@ -128,7 +128,7 @@ export default function HeroSection() {
 
           <div className="flex items-center gap-4 shrink-0">
             <Link
-              href="/install?platform=ios"
+              href="/learn"
               className="flex items-center gap-2 text-xs font-semibold text-[#26241F] hover:text-[#0F6F5C] transition-colors"
             >
               <span>🍎</span> آموزش نصب برای آیفون
@@ -136,7 +136,7 @@ export default function HeroSection() {
             </Link>
             <div className="w-px h-4 bg-[#EDE8DC]" />
             <Link
-              href="/install?platform=windows"
+              href="/learn"
               className="flex items-center gap-2 text-xs font-semibold text-[#26241F] hover:text-[#0F6F5C] transition-colors"
             >
               <span>🪟</span> آموزش نصب برای ویندوز
