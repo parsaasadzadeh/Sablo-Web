@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus, CheckCircle, ChevronRight, ChevronLeft, Pencil, Trash2, Eye } from "lucide-react";
 import { formatJalaliDate } from "@/utils/date";
 import TransactionDetailModal from "./TransactionDetailModal";
 import PayInstallmentModal from "./PayInstallmentModal";
 import { useCurrency } from "@/context/currencyContext";
-import api from "@/lib/axios";
+import { useCard } from "@/context/cardContext";
 
 const TAB_OPTIONS = [
   { key: "ALL", label: "همه" },
@@ -15,16 +15,23 @@ const TAB_OPTIONS = [
   { key: "LOAN", label: "وام‌ها" },
 ];
 
-const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام", TRANSFER_IN: "انتقال", TRANSFER_OUT: "انتقال" };
+const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام", TRANSFER_IN: "دریافت", TRANSFER_OUT: "انتقال" };
 
 const TYPE_COLORS = {
   INCOME: "bg-[var(--emerald-bg)] text-[color:var(--emerald-text)]",
   EXPENSE: "bg-[var(--rose-bg)] text-[color:var(--rose-text)]",
   INSTALLMENT: "bg-[var(--orange-bg)] text-[color:var(--orange-text)]",
   LOAN: "bg-[var(--info-light)] text-[color:var(--info)]",
-  TRANSFER_IN: "bg-[var(--info-light)] text-[color:var(--info)]",
-  TRANSFER_OUT: "bg-[var(--info-light)] text-[color:var(--info)]",
+  TRANSFER_IN: "bg-[var(--transfer-in-bg)] text-[color:var(--transfer-in-text)]",
+  TRANSFER_OUT: "bg-[var(--transfer-out-bg)] text-[color:var(--transfer-out-text)]",
 };
+
+// رنگ مبلغ: انتقال/دریافت رنگ خودشان را دارند تا با درآمد و خرج اشتباه نشوند
+const AMOUNT_COLORS = {
+  TRANSFER_IN: "text-[color:var(--transfer-in)]",
+  TRANSFER_OUT: "text-[color:var(--transfer-out)]",
+};
+const isTransferType = (t) => t === "TRANSFER_IN" || t === "TRANSFER_OUT";
 
 // ── کامپوننت اصلی ────────────────────────────────────────────────────────────
 export default function TransactionList({
@@ -33,15 +40,9 @@ export default function TransactionList({
 }) {
   const [activeTab, setActiveTab] = useState("ALL");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [cards, setCards] = useState([]);
+  const { cards } = useCard();
   const [payModal, setPayModal] = useState({ open: false, txId: null });
   const { display, unit } = useCurrency();
-
-  useEffect(() => {
-    api.get("/cards")
-      .then((res) => setCards(res.data.cards ?? res.data ?? []))
-      .catch(() => setCards([]));
-  }, []);
 
   const handlePayPress = (txId) => {
     if (cards.length === 0) {
@@ -127,7 +128,7 @@ export default function TransactionList({
                       <div className="text-left shrink-0">
                         <span
                           className={`text-xs sm:text-sm font-bold tracking-wide tabular block whitespace-nowrap ${
-                            positive ? "text-[color:var(--emerald-mid)]" : "text-[color:var(--rose-mid)]"
+                            AMOUNT_COLORS[tx.type] ?? (positive ? "text-[color:var(--emerald-mid)]" : "text-[color:var(--rose-mid)]")
                           }`}
                         >
                           {positive ? "+" : "-"}
@@ -170,6 +171,7 @@ export default function TransactionList({
                   >
                     <Eye size={14} />
                   </button>
+                  {!isTransferType(tx.type) && (
                   <button
                     aria-label="ویرایش"
                     onClick={(e) => { e.stopPropagation(); onEditTransaction(tx); }}
@@ -177,6 +179,7 @@ export default function TransactionList({
                   >
                     <Pencil size={14} />
                   </button>
+                  )}
                   <button
                     aria-label="حذف"
                     onClick={(e) => { e.stopPropagation(); onDeleteTransaction(tx); }}
@@ -245,3 +248,4 @@ export default function TransactionList({
     </div>
   );
 }
+
