@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://sablo-application.vercel.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://systembackendsablonetapi.ir/api",
   headers: {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
