@@ -17,7 +17,7 @@ import TransactionModal       from "@/components/dashboard/TransactionModal";
 import TransactionDetailModal from "@/components/dashboard/TransactionDetailModal";
 import PayInstallmentModal    from "@/components/dashboard/PayInstallmentModal";
 
-const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام" };
+const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام", TRANSFER_IN: "انتقال", TRANSFER_OUT: "انتقال" };
 
 // رنگ هر نوع تراکنش از متغیرهای تم (success / danger / warning / info)
 const TYPE_COLORS = {
@@ -28,6 +28,10 @@ const TYPE_COLORS = {
   INSTALLMENT:
     "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[color:var(--warning)] border-[color-mix(in_srgb,var(--warning)_25%,transparent)]",
   LOAN:
+    "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
+  TRANSFER_IN:
+    "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
+  TRANSFER_OUT:
     "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
 };
 
@@ -93,7 +97,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
 }
 
 function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
-  const isPositive = tx.type === "INCOME" || tx.type === "LOAN";
+  const isPositive = tx.type === "INCOME" || tx.type === "LOAN" || tx.type === "TRANSFER_IN";
   return (
     <div className="py-3.5 border-b border-[color:var(--border)] last:border-0">
       <div className="flex flex-row-reverse items-start gap-3">
