@@ -4,7 +4,6 @@ import StatsSection from "@/components/landing/StatsSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CtaSection from "@/components/landing/CtaSection";
-import AboutSablo from "@/components/landing/aboutsablo";
 import Footer from "@/components/landing/Footer";
 import AuthRedirect from "@/components/AuthRedirect";
 
