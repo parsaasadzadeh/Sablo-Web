@@ -180,10 +180,10 @@ function SettingsContent({ user }) {
   const { mode, setMode } = useTheme();
   const [guideOpen, setGuideOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout"); // ← در صورت متفاوت بودن مسیر لاگ‌اوت تغییر بده
-    } catch {}
+  const handleLogout = () => {
+    // خروج یعنی پاک کردن توکن؛ بک‌اند مسیر /auth/logout ندارد.
+    // قبلاً توکن می‌ماند و AuthRedirect صفحه‌ی اصلی کاربر را دوباره به داشبورد می‌برد.
+    try { localStorage.removeItem("token"); } catch {}
     router.replace("/");
   };
 
