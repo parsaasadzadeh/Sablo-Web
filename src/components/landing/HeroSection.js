@@ -2,7 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
-
 export default function HeroSection() {
   const { isLoggedIn } = useAuth();
 
