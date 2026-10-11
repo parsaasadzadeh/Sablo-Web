@@ -9,7 +9,7 @@ const TYPE_LABELS = {
   EXPENSE: "خرج",
   INSTALLMENT: "قسط",
   LOAN: "وام",
-  TRANSFER_IN: "انتقال",
+  TRANSFER_IN: "دریافت",
   TRANSFER_OUT: "انتقال",
 };
 
@@ -18,8 +18,14 @@ const TYPE_COLORS = {
   EXPENSE: "bg-[var(--rose-bg)] text-[color:var(--rose-text)]",
   INSTALLMENT: "bg-[var(--orange-bg)] text-[color:var(--orange-text)]",
   LOAN: "bg-[var(--info-light)] text-[color:var(--info)]",
-  TRANSFER_IN: "bg-[var(--info-light)] text-[color:var(--info)]",
-  TRANSFER_OUT: "bg-[var(--info-light)] text-[color:var(--info)]",
+  TRANSFER_IN: "bg-[var(--transfer-in-bg)] text-[color:var(--transfer-in-text)]",
+  TRANSFER_OUT: "bg-[var(--transfer-out-bg)] text-[color:var(--transfer-out-text)]",
+};
+
+// جعبه‌ی مبلغ: انتقال/دریافت رنگ خودشان را دارند
+const AMOUNT_BOX = {
+  TRANSFER_IN: { bg: "bg-[var(--transfer-in-bg)]", text: "text-[color:var(--transfer-in-text)]" },
+  TRANSFER_OUT: { bg: "bg-[var(--transfer-out-bg)]", text: "text-[color:var(--transfer-out-text)]" },
 };
 
 function CategoryDisplay({ tx }) {
@@ -87,11 +93,11 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
         </div>
 
         {/* مبلغ */}
-        <div className={`rounded-2xl p-4 mb-4 ${isPositive ? "bg-[var(--emerald-bg)]" : "bg-[var(--rose-bg)]"}`}>
+        <div className={`rounded-2xl p-4 mb-4 ${AMOUNT_BOX[tx.type]?.bg ?? (isPositive ? "bg-[var(--emerald-bg)]" : "bg-[var(--rose-bg)]")}`}>
           <span className="text-[11px] text-[color:var(--muted)] block mb-1">مبلغ تراکنش</span>
           <span
             className={`text-xl font-bold tabular tracking-wide ${
-              isPositive ? "text-[color:var(--emerald-text)]" : "text-[color:var(--rose-text)]"
+              AMOUNT_BOX[tx.type]?.text ?? (isPositive ? "text-[color:var(--emerald-text)]" : "text-[color:var(--rose-text)]")
             }`}
           >
             {isPositive ? "+" : "-"}
@@ -156,12 +162,14 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
               <CheckCircle size={14} /> پرداخت قسط
             </button>
           )}
+          {tx.type !== "TRANSFER_IN" && tx.type !== "TRANSFER_OUT" && (
           <button
             onClick={() => { onEdit(tx); onClose(); }}
             className="flex-1 bg-[var(--brand-light)] hover:opacity-80 text-[color:var(--brand)] text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5 transition-opacity"
           >
             <Pencil size={14} /> ویرایش
           </button>
+          )}
           <button
             onClick={() => { onDelete(tx); onClose(); }}
             className="flex-1 bg-[var(--rose-bg)] hover:opacity-80 text-[color:var(--rose-mid)] text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center gap-1.5 transition-opacity"
@@ -173,3 +181,4 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
     </div>
   );
 }
+
