@@ -3,66 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 
-/* ── Bazaar Logo (Cafe Bazaar – green shopping bag) ── */
-function BazaarIcon({ size = 24 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="بازار"
-    >
-      {/* bag body */}
-      <rect x="8" y="22" width="48" height="36" rx="6" fill="white" fillOpacity="0.2" />
-      <rect x="8" y="22" width="48" height="36" rx="6" stroke="white" strokeWidth="3.5" />
-      {/* handle */}
-      <path
-        d="M22 22C22 14.268 26.477 8 32 8C37.523 8 42 14.268 42 22"
-        stroke="white"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-      />
-      {/* sparkle / star */}
-      <path
-        d="M32 33 L33.5 37 L38 37 L34.5 39.5 L36 44 L32 41.5 L28 44 L29.5 39.5 L26 37 L30.5 37 Z"
-        fill="white"
-      />
-    </svg>
-  );
-}
-
-/* ── Myket Logo (M lettermark in blue/white) ── */
-function MyketIcon({ size = 24 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="مایکت"
-    >
-      <circle cx="32" cy="32" r="28" fill="white" fillOpacity="0.2" />
-      <circle cx="32" cy="32" r="28" stroke="white" strokeWidth="3" />
-      {/* Bold M */}
-      <text
-        x="32"
-        y="44"
-        textAnchor="middle"
-        fontFamily="Arial Black, Arial, sans-serif"
-        fontWeight="900"
-        fontSize="32"
-        fill="white"
-        letterSpacing="-1"
-      >
-        M
-      </text>
-    </svg>
-  );
-}
-
 export default function HeroSection() {
   const { isLoggedIn } = useAuth();
 
@@ -92,8 +32,7 @@ export default function HeroSection() {
             از خریدهای روزمره تا اقساط و پس‌انداز، همه چیز در یک اپلیکیشن.
           </p>
 
-          {/* ── CTAs ── */}
-          {/* Desktop: row  |  Mobile: 2×2 grid + login full-width */}
+          {/* CTAs */}
           <div className="w-full sm:w-auto">
 
             {/* Download buttons — 2 col on mobile, row on sm+ */}
@@ -102,15 +41,8 @@ export default function HeroSection() {
               {/* Bazaar */}
               <a
                 href="#"
-                className="
-                  flex items-center justify-center gap-2.5
-                  bg-[#2B9348] hover:bg-[#247A3C]
-                  text-white font-bold
-                  px-4 py-3 rounded-xl transition-all shadow-sm
-                  text-xs sm:text-sm sm:min-w-[156px]
-                "
+                className="flex items-center justify-center gap-2.5 bg-[#1A1916] hover:bg-[#2e2c28] text-white font-bold px-4 py-3 rounded-xl transition-all shadow-sm text-xs sm:text-sm sm:min-w-[156px]"
               >
-                <BazaarIcon size={22} />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="text-[9px] sm:text-[10px] font-normal opacity-80">دانلود از</span>
                   <span className="text-sm sm:text-base font-extrabold">بازار</span>
@@ -120,46 +52,28 @@ export default function HeroSection() {
               {/* Myket */}
               <a
                 href="#"
-                className="
-                  flex items-center justify-center gap-2.5
-                  bg-[#1565D8] hover:bg-[#1255BB]
-                  text-white font-bold
-                  px-4 py-3 rounded-xl transition-all shadow-sm
-                  text-xs sm:text-sm sm:min-w-[156px]
-                "
+                className="flex items-center justify-center gap-2.5 bg-[#1565D8] hover:bg-[#1255BB] text-white font-bold px-4 py-3 rounded-xl transition-all shadow-sm text-xs sm:text-sm sm:min-w-[156px]"
               >
-                <MyketIcon size={22} />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="text-[9px] sm:text-[10px] font-normal opacity-80">دانلود از</span>
                   <span className="text-sm sm:text-base font-extrabold">مایکت</span>
                 </span>
               </a>
 
-              {/* Login — hidden on mobile (shown below), visible on sm+ */}
+              {/* Login — desktop only */}
               <Link
                 href={isLoggedIn ? "/dashboard" : "/login"}
-                className="
-                  hidden sm:flex items-center justify-center gap-2
-                  bg-[#0F6F5C] hover:bg-[#0C5A4A]
-                  text-white text-sm font-bold
-                  px-6 py-3 rounded-xl transition-all shadow-sm
-                  min-w-[120px]
-                "
+                className="hidden sm:flex items-center justify-center gap-2 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-sm min-w-[120px]"
               >
                 <span className="text-base">👤</span>
                 {isLoggedIn ? "داشبورد" : "ورود"}
               </Link>
             </div>
 
-            {/* Login — full width on mobile only */}
+            {/* Login — mobile full width */}
             <Link
               href={isLoggedIn ? "/dashboard" : "/login"}
-              className="
-                sm:hidden mt-3 flex items-center justify-center gap-2
-                bg-[#0F6F5C] hover:bg-[#0C5A4A]
-                text-white text-sm font-bold
-                w-full py-3 rounded-xl transition-all shadow-sm
-              "
+              className="sm:hidden mt-3 flex items-center justify-center gap-2 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white text-sm font-bold w-full py-3 rounded-xl transition-all shadow-sm"
             >
               <span className="text-base">👤</span>
               {isLoggedIn ? "ورود به داشبورد" : "ورود به اپلیکیشن"}
@@ -214,21 +128,21 @@ export default function HeroSection() {
           </div>
 
           <div className="flex items-center gap-4 shrink-0">
-            <a
-              href="#"
+            <Link
+              href="/install?platform=ios"
               className="flex items-center gap-2 text-xs font-semibold text-[#26241F] hover:text-[#0F6F5C] transition-colors"
             >
               <span>🍎</span> آموزش نصب برای آیفون
               <span className="text-[#0F6F5C]">›</span>
-            </a>
+            </Link>
             <div className="w-px h-4 bg-[#EDE8DC]" />
-            <a
-              href="#"
+            <Link
+              href="/install?platform=windows"
               className="flex items-center gap-2 text-xs font-semibold text-[#26241F] hover:text-[#0F6F5C] transition-colors"
             >
               <span>🪟</span> آموزش نصب برای ویندوز
               <span className="text-[#0F6F5C]">›</span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
