@@ -1,37 +1,142 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Menu, X, Download, ChevronDown, User } from "lucide-react";
 
-export default function HeroSection() {
-  const { isLoggedIn } = useAuth();
+export default function Header() {
+  const [open, setOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+
+  const navItems = [
+    { href: "/", label: "خانه" },
+    { href: "#features", label: "ویژگی‌ها" },
+    { href: "#testimonials", label: "نظرات کاربران" },
+    { href: "#faq", label: "سوالات متداول" },
+    { href: "/about", label: "درباره ما" },
+  ];
 
   return (
-    <section className="text-center max-w-3xl mx-auto mb-20">
-      <span className="inline-block bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold px-3 py-1 rounded-full mb-4">
-        نسخه هوشمند و ارتقا یافته سال ۱۴۰۵
-      </span>
-      <h1 className="text-3xl md:text-5xl font-extrabold text-[#26241F] leading-snug md:leading-tight mb-6">
-        آیا می‌دانید پول‌هایتان دقیقاً <span className="text-[#0F6F5C]">کجا</span> خرج می‌شوند؟
-      </h1>
-      <p className="text-sm md:text-base text-[#8A8273] leading-7 mb-8 max-w-2xl mx-auto">
-        بیشتر آدم‌ها دخل و خرجشان را گم می‌کنند، چون سیستم‌های سنتی نمی‌فهمند فرقِ «وام» با «خرج روزمره» چیست! با سابلو، دخل، خرج، اقساط و بدهی‌هایت را به سادگیِ یک آب خوردن مدیریت کن و هیچ‌وقت گیج نشو.
-      </p>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Link
-          href={isLoggedIn ? "/dashboard" : "/login"}
-          className="w-full sm:w-auto h-12 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white text-xs font-bold px-8 rounded-xl transition-all shadow flex items-center justify-center gap-2"
-        >
-          {isLoggedIn ? "ورود به داشبورد" : "ورود"}
-          <ArrowRight size={16} />
+    <header
+      dir="rtl"
+      className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm"
+    >
+      <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
+        {/* Logo — right side in RTL */}
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <span className="text-2xl">🌿</span>
+          <span className="font-extrabold text-xl text-[#0F6F5C] tracking-tight">
+            سابلو
+          </span>
         </Link>
-        <a
-          href="#features"
-          className="w-full sm:w-auto h-12 bg-white border border-[#EDE8DC] hover:bg-gray-50 text-xs font-semibold px-8 rounded-xl transition-all flex items-center justify-center"
+
+        {/* Nav — center */}
+        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-[#6B6860]">
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="hover:text-[#0F6F5C] transition-colors relative group pb-0.5"
+            >
+              {item.label}
+              <span className="absolute bottom-0 right-0 w-0 h-0.5 bg-[#0F6F5C] group-hover:w-full transition-all duration-200 rounded-full" />
+            </a>
+          ))}
+        </nav>
+
+        {/* Actions — left side in RTL */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* Download dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setDownloadOpen((p) => !p)}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#26241F] border border-[#DDD9D0] px-4 py-2 rounded-xl hover:bg-[#F7F4EE] transition-colors"
+            >
+              <Download size={15} />
+              دانلود اپ
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${downloadOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {downloadOpen && (
+              <div className="absolute left-0 mt-2 w-44 bg-white border border-[#EDE8DC] rounded-2xl shadow-lg py-2 z-50">
+                <a
+                  href="#"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#26241F] hover:bg-[#F7F4EE] transition-colors"
+                >
+                  <span>🛒</span> دانلود از بازار
+                </a>
+                <a
+                  href="#"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#26241F] hover:bg-[#F7F4EE] transition-colors"
+                >
+                  <span>🟦</span> دانلود از مایکت
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Login */}
+          <Link
+            href="/login"
+            className="flex items-center gap-2 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white text-sm font-bold px-5 py-2 rounded-xl transition-all shadow-sm"
+          >
+            <User size={15} />
+            ورود
+          </Link>
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label="باز و بسته کردن منو"
+          className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#F1EFE9] text-[#0F6F5C] hover:bg-[#0F6F5C]/10 transition-colors"
         >
-          بیشتر بدانید
-        </a>
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
       </div>
-    </section>
+
+      {/* Mobile menu */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          open ? "max-h-[400px]" : "max-h-0"
+        }`}
+      >
+        <nav
+          dir="rtl"
+          className="flex flex-col gap-1 px-6 pb-4 pt-2 text-sm font-medium text-[#6B6860] border-t border-[#EDE8DC] bg-white"
+        >
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="py-3 px-3 rounded-xl hover:bg-[#F7F4EE] hover:text-[#0F6F5C] transition-colors"
+            >
+              {item.label}
+            </a>
+          ))}
+
+          <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-[#EDE8DC]">
+            <a
+              href="#"
+              className="flex items-center gap-2 py-3 px-3 rounded-xl hover:bg-[#F7F4EE] text-[#26241F] transition-colors"
+            >
+              <Download size={15} /> دانلود از بازار
+            </a>
+            <Link
+              href="/login"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-center gap-2 bg-[#0F6F5C] hover:bg-[#0C5A4A] text-white font-bold px-5 py-3 rounded-xl transition-all"
+            >
+              <User size={15} /> ورود
+            </Link>
+          </div>
+        </nav>
+      </div>
+    </header>
   );
 }
