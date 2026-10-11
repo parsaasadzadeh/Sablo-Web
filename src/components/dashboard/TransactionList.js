@@ -15,13 +15,15 @@ const TAB_OPTIONS = [
   { key: "LOAN", label: "وام‌ها" },
 ];
 
-const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام" };
+const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام", TRANSFER_IN: "انتقال", TRANSFER_OUT: "انتقال" };
 
 const TYPE_COLORS = {
   INCOME: "bg-[var(--emerald-bg)] text-[color:var(--emerald-text)]",
   EXPENSE: "bg-[var(--rose-bg)] text-[color:var(--rose-text)]",
   INSTALLMENT: "bg-[var(--orange-bg)] text-[color:var(--orange-text)]",
   LOAN: "bg-[var(--info-light)] text-[color:var(--info)]",
+  TRANSFER_IN: "bg-[var(--info-light)] text-[color:var(--info)]",
+  TRANSFER_OUT: "bg-[var(--info-light)] text-[color:var(--info)]",
 };
 
 // ── کامپوننت اصلی ────────────────────────────────────────────────────────────
@@ -99,7 +101,7 @@ export default function TransactionList({
       ) : (
         <div className="divide-y divide-[color:var(--border)] max-h-[480px] overflow-y-auto pr-1">
           {filteredTransactions.map((tx) => {
-            const positive = tx.type === "INCOME" || tx.type === "LOAN";
+            const positive = tx.type === "INCOME" || tx.type === "LOAN" || tx.type === "TRANSFER_IN";
             return (
               <div
                 key={tx._id}
