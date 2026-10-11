@@ -104,7 +104,7 @@ function TabBtn({ active, onClick, icon, label, sub }) {
   );
 }
 
-export default function InstallGuidePage() {
+export default function InstallGuideContent() {
   const searchParams = useSearchParams();
   const [platform, setPlatform] = useState("ios");
 
@@ -119,7 +119,20 @@ export default function InstallGuidePage() {
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F5F0]">
 
-    
+      {/* Top bar */}
+      <div className="bg-white border-b border-[#EDE8DC] sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-1 text-sm text-[#6B6860] hover:text-[#0F6F5C] transition-colors"
+          >
+            <ChevronLeft size={16} />
+            بازگشت
+          </Link>
+          <span className="text-[#DDD9D0]">|</span>
+          <span className="text-sm font-bold text-[#1A1916]">آموزش نصب سابلو</span>
+        </div>
+      </div>
 
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
 
@@ -227,8 +240,6 @@ export default function InstallGuidePage() {
             </div>
           ))}
         </div>
-
-       
 
         {/* Android note */}
         <div className="bg-white border border-[#EDE8DC] rounded-2xl px-5 py-5 flex gap-4 items-start">
