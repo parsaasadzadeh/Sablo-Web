@@ -13,6 +13,7 @@ import AiAnalysisCard     from "@/components/dashboard/AiAnalysisCard";
 import CurrencyToggle     from "@/components/dashboard/CurrencyToggle";
 import QuickNav           from "@/components/dashboard/QuickNav";
 import ActiveCardBanner   from "@/components/dashboard/ActiveCardBanner";
+import CardTransferSection from "@/components/dashboard/CardTransferSection";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -163,6 +164,7 @@ export default function DashboardPage() {
           <QuickNav />
           <CurrencyToggle />
           <ActiveCardBanner />
+          <CardTransferSection onSuccess={() => fetchFinanceData(currentPage)} />
           <StatsGrid summary={stats.summary} />
           <TransactionList
             transactions={transactions}
@@ -190,3 +192,4 @@ export default function DashboardPage() {
     </CurrencyProvider>
   );
 }
+
