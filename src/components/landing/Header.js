@@ -12,8 +12,7 @@ export default function Header() {
     { href: "#features", label: "ویژگی‌ها" },
     { href: "#testimonials", label: "نظرات کاربران" },
     { href: "#faq", label: "سوالات متداول" },
-    { href: "/about", label: "درباره ما" },
-    { href: "/learn", label: "آموزش" },
+    { href: "/about", label: "درباره ما" }
   ];
 
   return (
