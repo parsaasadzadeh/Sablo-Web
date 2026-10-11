@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -15,15 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 
-type Platform = "ios" | "windows";
-
-type Step = {
-  icon: ReactNode;
-  title: string;
-  desc: string;
-};
-
-const iosSteps: Step[] = [
+const iosSteps = [
   {
     icon: <Globe size={20} />,
     title: "سافاری را باز کنید",
@@ -56,7 +47,7 @@ const iosSteps: Step[] = [
   },
 ];
 
-const windowsSteps: Step[] = [
+const windowsSteps = [
   {
     icon: <Globe size={20} />,
     title: "Edge یا Chrome را باز کنید",
@@ -89,15 +80,7 @@ const windowsSteps: Step[] = [
   },
 ];
 
-type TabBtnProps = {
-  active: boolean;
-  onClick: () => void;
-  icon: ReactNode;
-  label: string;
-  sub: string;
-};
-
-function TabBtn({ active, onClick, icon, label, sub }: TabBtnProps) {
+function TabBtn({ active, onClick, icon, label, sub }) {
   return (
     <button
       type="button"
@@ -127,7 +110,7 @@ function TabBtn({ active, onClick, icon, label, sub }: TabBtnProps) {
 }
 
 export default function InstallGuidePage() {
-  const [platform, setPlatform] = useState<Platform>("ios");
+  const [platform, setPlatform] = useState("ios");
 
   // خواندن پارامتر ?platform=windows فقط در مرورگر (بدون useSearchParams تا build خطا ندهد)
   useEffect(() => {
