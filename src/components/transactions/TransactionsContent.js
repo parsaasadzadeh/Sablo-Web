@@ -17,7 +17,7 @@ import TransactionModal       from "@/components/dashboard/TransactionModal";
 import TransactionDetailModal from "@/components/dashboard/TransactionDetailModal";
 import PayInstallmentModal    from "@/components/dashboard/PayInstallmentModal";
 
-const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام", TRANSFER_IN: "انتقال", TRANSFER_OUT: "انتقال" };
+const TYPE_LABELS = { INCOME: "درآمد", EXPENSE: "خرج", INSTALLMENT: "قسط", LOAN: "وام", TRANSFER_IN: "دریافت", TRANSFER_OUT: "انتقال" };
 
 // رنگ هر نوع تراکنش از متغیرهای تم (success / danger / warning / info)
 const TYPE_COLORS = {
@@ -30,9 +30,14 @@ const TYPE_COLORS = {
   LOAN:
     "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
   TRANSFER_IN:
-    "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
+    "bg-[color-mix(in_srgb,var(--transfer-in)_12%,transparent)] text-[color:var(--transfer-in)] border-[color-mix(in_srgb,var(--transfer-in)_25%,transparent)]",
   TRANSFER_OUT:
-    "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[color:var(--info)] border-[color-mix(in_srgb,var(--info)_25%,transparent)]",
+    "bg-[color-mix(in_srgb,var(--transfer-out)_12%,transparent)] text-[color:var(--transfer-out)] border-[color-mix(in_srgb,var(--transfer-out)_25%,transparent)]",
+};
+
+const AMOUNT_COLORS = {
+  TRANSFER_IN: "text-[color:var(--transfer-in)]",
+  TRANSFER_OUT: "text-[color:var(--transfer-out)]",
 };
 
 const ICON_BTN = "w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[var(--hover)] transition-colors";
@@ -122,7 +127,7 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
           )}
         </div>
         <div className="shrink-0 text-left">
-          <p className={`text-base font-extrabold ${isPositive ? "text-[color:var(--success)]" : "text-[color:var(--danger)]"}`}>
+          <p className={`text-base font-extrabold ${AMOUNT_COLORS[tx.type] ?? (isPositive ? "text-[color:var(--success)]" : "text-[color:var(--danger)]")}`}>
             {isPositive ? "+" : "-"}{display(tx.amount)}
           </p>
           <p className="text-[11px] text-[color:var(--muted)] font-medium">{unit}</p>
@@ -147,9 +152,11 @@ function TxRow({ tx, onPay, onView, onEdit, onDelete, display, unit }) {
           <button onClick={() => onView(tx)} aria-label="مشاهده" className={ICON_BTN}>
             <Eye size={14} className="text-[color:var(--muted)]" />
           </button>
-          <button onClick={() => onEdit(tx)} aria-label="ویرایش" className={ICON_BTN}>
-            <Pencil size={14} className="text-[color:var(--muted)]" />
-          </button>
+          {tx.type !== "TRANSFER_IN" && tx.type !== "TRANSFER_OUT" && (
+            <button onClick={() => onEdit(tx)} aria-label="ویرایش" className={ICON_BTN}>
+              <Pencil size={14} className="text-[color:var(--muted)]" />
+            </button>
+          )}
           <button onClick={() => onDelete(tx)} aria-label="حذف"
             className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[var(--danger-light)] transition-colors">
             <Trash2 size={14} className="text-[color:var(--danger)]" />
@@ -294,7 +301,9 @@ export default function TransactionsContent() {
   const handleDelete = useCallback(async (tx) => {
     const msg = tx.type === "LOAN"
       ? `آیا مطمئنید می‌خواهید وام «${tx.title}» را حذف کنید؟ تمام اقساط هم حذف خواهند شد.`
-      : `آیا مطمئنید می‌خواهید تراکنش «${tx.title}» را حذف کنید؟`;
+      : (tx.type === "TRANSFER_IN" || tx.type === "TRANSFER_OUT")
+        ? "با حذف این انتقال، هر دو سمت آن (کارت مبدا و مقصد) حذف می‌شود. ادامه می‌دهید؟"
+        : `آیا مطمئنید می‌خواهید تراکنش «${tx.title}» را حذف کنید؟`;
     if (!window.confirm(msg)) return;
     try {
       await api.delete(`/finance/delete/${tx._id}`);
@@ -510,3 +519,4 @@ export default function TransactionsContent() {
     </div>
   );
 }
+
