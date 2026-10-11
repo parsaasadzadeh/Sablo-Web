@@ -13,6 +13,7 @@ export default function Header() {
     { href: "#testimonials", label: "نظرات کاربران" },
     { href: "#faq", label: "سوالات متداول" },
     { href: "/about", label: "درباره ما" },
+    { href: "/learn", label: "آموزش" },
   ];
 
   return (
@@ -63,13 +64,13 @@ export default function Header() {
             {downloadOpen && (
               <div className="absolute left-0 mt-2 w-44 bg-white border border-[#EDE8DC] rounded-2xl shadow-lg py-2 z-50">
                 <a
-                  href="#"
+                  href="https://cafebazaar.ir/app/com.sabloapp.sablo"
                   className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#26241F] hover:bg-[#F7F4EE] transition-colors"
                 >
                   <span>🛒</span> دانلود از بازار
                 </a>
                 <a
-                  href="#"
+                  href="https://myket.ir/app/com.sabloapp.sablo"
                   className="flex items-center gap-2 px-4 py-2.5 text-sm text-[#26241F] hover:bg-[#F7F4EE] transition-colors"
                 >
                   <span>🟦</span> دانلود از مایکت
@@ -122,7 +123,7 @@ export default function Header() {
 
           <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-[#EDE8DC]">
             <a
-              href="#"
+              href="https://cafebazaar.ir/app/com.sabloapp.sablo"
               className="flex items-center gap-2 py-3 px-3 rounded-xl hover:bg-[#F7F4EE] text-[#26241F] transition-colors"
             >
               <Download size={15} /> دانلود از بازار
