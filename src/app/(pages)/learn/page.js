@@ -1,6 +1,7 @@
 "use client";
+
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -14,7 +15,15 @@ import {
   Globe,
 } from "lucide-react";
 
-const iosSteps = [
+type Platform = "ios" | "windows";
+
+type Step = {
+  icon: ReactNode;
+  title: string;
+  desc: string;
+};
+
+const iosSteps: Step[] = [
   {
     icon: <Globe size={20} />,
     title: "سافاری را باز کنید",
@@ -47,7 +56,7 @@ const iosSteps = [
   },
 ];
 
-const windowsSteps = [
+const windowsSteps: Step[] = [
   {
     icon: <Globe size={20} />,
     title: "Edge یا Chrome را باز کنید",
@@ -80,11 +89,20 @@ const windowsSteps = [
   },
 ];
 
-function TabBtn({ active, onClick, icon, label, sub }) {
+type TabBtnProps = {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  label: string;
+  sub: string;
+};
+
+function TabBtn({ active, onClick, icon, label, sub }: TabBtnProps) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={`flex-1 flex items-center justify-center gap-3 py-4 px-4 rounded-2xl transition-all ${
         active
           ? "bg-[#0F6F5C] text-white shadow-md"
@@ -96,7 +114,11 @@ function TabBtn({ active, onClick, icon, label, sub }) {
       </span>
       <span className="text-right">
         <span className="block font-bold text-sm">{label}</span>
-        <span className={`block text-[11px] ${active ? "text-white/70" : "text-[#9A9285]"}`}>
+        <span
+          className={`block text-[11px] ${
+            active ? "text-white/70" : "text-[#9A9285]"
+          }`}
+        >
           {sub}
         </span>
       </span>
@@ -104,21 +126,25 @@ function TabBtn({ active, onClick, icon, label, sub }) {
   );
 }
 
-export default function InstallGuideContent() {
-  const searchParams = useSearchParams();
-  const [platform, setPlatform] = useState("ios");
+export default function InstallGuidePage() {
+  const [platform, setPlatform] = useState<Platform>("ios");
 
+  // خواندن پارامتر ?platform=windows فقط در مرورگر (بدون useSearchParams تا build خطا ندهد)
   useEffect(() => {
-    const p = searchParams.get("platform");
-    if (p === "windows") setPlatform("windows");
-    else setPlatform("ios");
-  }, [searchParams]);
+    try {
+      const p = new URLSearchParams(window.location.search).get("platform");
+      if (p === "windows") setPlatform("windows");
+    } catch {
+      // نادیده گرفتن خطا؛ پیش‌فرض iOS می‌ماند
+    }
+  }, []);
 
-  const steps = platform === "ios" ? iosSteps : windowsSteps;
+  const isIos = platform === "ios";
+  const steps = isIos ? iosSteps : windowsSteps;
+  const accent = isIos ? "#1A1916" : "#1565D8";
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#F7F5F0]">
-
       {/* Top bar */}
       <div className="bg-white border-b border-[#EDE8DC] sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
@@ -135,7 +161,6 @@ export default function InstallGuideContent() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-
         {/* Hero */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#0F6F5C] shadow-lg mb-2">
@@ -145,8 +170,8 @@ export default function InstallGuideContent() {
             آموزش نصب برای آیفون و ویندوز
           </h1>
           <p className="text-sm text-[#6B6860] max-w-md mx-auto leading-7">
-            سابلو یک Progressive Web App است، یعنی بدون نیاز به اپ‌استور،
-            مستقیم روی گوشی یا کامپیوتر نصب می‌شود.
+            سابلو یک Progressive Web App است، یعنی بدون نیاز به اپ‌استور، مستقیم
+            روی گوشی یا کامپیوتر نصب می‌شود.
           </p>
         </div>
 
@@ -157,24 +182,24 @@ export default function InstallGuideContent() {
           </p>
           <div className="flex gap-3">
             <TabBtn
-              active={platform === "ios"}
+              active={isIos}
               onClick={() => setPlatform("ios")}
               icon={
                 <Smartphone
                   size={18}
-                  className={platform === "ios" ? "text-[#0F6F5C]" : "text-[#6B6860]"}
+                  className={isIos ? "text-[#0F6F5C]" : "text-[#6B6860]"}
                 />
               }
               label="آیفون (iOS)"
               sub="Safari · iOS 16.4+"
             />
             <TabBtn
-              active={platform === "windows"}
+              active={!isIos}
               onClick={() => setPlatform("windows")}
               icon={
                 <Monitor
                   size={18}
-                  className={platform === "windows" ? "text-[#1565D8]" : "text-[#6B6860]"}
+                  className={!isIos ? "text-[#1565D8]" : "text-[#6B6860]"}
                 />
               }
               label="ویندوز"
@@ -184,12 +209,13 @@ export default function InstallGuideContent() {
         </div>
 
         {/* Note box */}
-        {platform === "ios" ? (
+        {isIos ? (
           <div className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
             <span className="text-xl shrink-0">⚠️</span>
             <p className="text-xs text-amber-800 leading-6">
-              نصب در آیفون <span className="font-bold">فقط از طریق Safari</span> ممکن است.
-              اگر از Chrome یا Firefox استفاده می‌کنید، ابتدا Safari را باز کنید.
+              نصب در آیفون <span className="font-bold">فقط از طریق Safari</span>{" "}
+              ممکن است. اگر از Chrome یا Firefox استفاده می‌کنید، ابتدا Safari را
+              باز کنید.
             </p>
           </div>
         ) : (
@@ -205,32 +231,27 @@ export default function InstallGuideContent() {
         {/* Steps */}
         <div className="space-y-3">
           <h2 className="text-base font-bold text-[#1A1916]">
-            {platform === "ios" ? "مراحل نصب در آیفون" : "مراحل نصب در ویندوز"}
+            {isIos ? "مراحل نصب در آیفون" : "مراحل نصب در ویندوز"}
           </h2>
 
           {steps.map((step, i) => (
             <div
-              key={i}
+              key={`${platform}-${i}`}
               className="bg-white border border-[#EDE8DC] rounded-2xl px-5 py-4 flex gap-4 items-start"
             >
               <div className="flex flex-col items-center gap-1.5 shrink-0">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow-sm"
-                  style={{ backgroundColor: platform === "ios" ? "#1A1916" : "#1565D8" }}
+                  style={{ backgroundColor: accent }}
                 >
                   {i + 1}
                 </div>
-                {i < steps.length - 1 && (
-                  <div className="w-px h-6 bg-[#EDE8DC]" />
-                )}
+                {i < steps.length - 1 && <div className="w-px h-6 bg-[#EDE8DC]" />}
               </div>
 
               <div className="flex-1 pt-0.5">
                 <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className="text-sm"
-                    style={{ color: platform === "ios" ? "#1A1916" : "#1565D8" }}
-                  >
+                  <span className="text-sm" style={{ color: accent }}>
                     {step.icon}
                   </span>
                   <p className="font-bold text-sm text-[#1A1916]">{step.title}</p>
@@ -250,8 +271,9 @@ export default function InstallGuideContent() {
               کاربران اندروید می‌توانند سابلو را از{" "}
               <span className="font-bold text-[#2B9348]">بازار</span> یا{" "}
               <span className="font-bold text-[#1565D8]">مایکت</span> دانلود کنند.
-              کافیست عبارت <span className="font-bold text-[#1A1916]">«سابلو»</span> را
-              در این اپ‌استورها سرچ کنید.
+              کافیست عبارت{" "}
+              <span className="font-bold text-[#1A1916]">«سابلو»</span> را در این
+              اپ‌استورها سرچ کنید.
             </p>
             <div className="flex gap-3 mt-3">
               <a
