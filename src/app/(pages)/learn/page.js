@@ -260,13 +260,13 @@ export default function InstallGuidePage() {
             </p>
             <div className="flex gap-3 mt-3">
               <a
-                href="#"
+                href="https://cafebazaar.ir/app/com.sabloapp.sablo"
                 className="flex items-center gap-1.5 bg-[#1A1916] text-white text-xs font-bold px-4 py-2 rounded-xl"
               >
                 🛒 بازار
               </a>
               <a
-                href="#"
+                href="https://myket.ir/app/com.sabloapp.sablo"
                 className="flex items-center gap-1.5 bg-[#1565D8] text-white text-xs font-bold px-4 py-2 rounded-xl"
               >
                 🟦 مایکت
