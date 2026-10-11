@@ -9,6 +9,8 @@ const TYPE_LABELS = {
   EXPENSE: "خرج",
   INSTALLMENT: "قسط",
   LOAN: "وام",
+  TRANSFER_IN: "انتقال",
+  TRANSFER_OUT: "انتقال",
 };
 
 const TYPE_COLORS = {
@@ -16,6 +18,8 @@ const TYPE_COLORS = {
   EXPENSE: "bg-[var(--rose-bg)] text-[color:var(--rose-text)]",
   INSTALLMENT: "bg-[var(--orange-bg)] text-[color:var(--orange-text)]",
   LOAN: "bg-[var(--info-light)] text-[color:var(--info)]",
+  TRANSFER_IN: "bg-[var(--info-light)] text-[color:var(--info)]",
+  TRANSFER_OUT: "bg-[var(--info-light)] text-[color:var(--info)]",
 };
 
 function CategoryDisplay({ tx }) {
@@ -50,7 +54,7 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
 
   if (!transaction) return null;
   const tx = transaction;
-  const isPositive = tx.type === "INCOME" || tx.type === "LOAN";
+  const isPositive = tx.type === "INCOME" || tx.type === "LOAN" || tx.type === "TRANSFER_IN";
 
   return (
     <div
