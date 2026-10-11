@@ -23,8 +23,6 @@ export default function Home() {
         <StatsSection />
         <FeaturesSection />
         <TestimonialsSection />
-        <AboutSablo/>
-        <CtaSection />
       </main>
 
       <Footer />
