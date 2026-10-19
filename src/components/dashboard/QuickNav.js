@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
-import { BarChart2, Calculator, Target, ArrowLeftRight, Landmark, CreditCard, Settings, PiggyBank } from "lucide-react";
+import { BarChart2, Calculator, Target, ArrowLeftRight, Landmark, CreditCard, Settings, PiggyBank, BookOpen } from "lucide-react";
+import TutorialModal from "@/components/tutorial/TutorialModal";
 
 const ITEMS = [
   { label: "گزارش‌های مالی", icon: BarChart2, path: "/reports" },
@@ -14,7 +16,10 @@ const ITEMS = [
 ];
 
 export default function QuickNav() {
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+
   return (
+    <>
     <nav
       aria-label="دسترسی سریع"
       className="bg-[var(--card)] rounded-2xl border border-[color:var(--border)] px-4 py-3 mb-4"
@@ -31,7 +36,19 @@ export default function QuickNav() {
             {item.label}
           </Link>
         ))}
+
+        <button
+          type="button"
+          onClick={() => setTutorialOpen(true)}
+          className="flex items-center gap-1.5 bg-[var(--brand-light)] hover:opacity-80 text-[color:var(--brand)] text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity border border-[color:var(--brand)] focus-visible:outline-2 focus-visible:outline-[color:var(--brand)]"
+        >
+          <BookOpen size={13} />
+          آموزش
+        </button>
       </div>
     </nav>
+
+    <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+    </>
   );
 }
