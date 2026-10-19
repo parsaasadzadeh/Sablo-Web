@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Sun,
   Moon,
+  Tag as TagIcon,
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useTheme } from "@/context/themeContext";
@@ -237,6 +238,14 @@ function SettingsContent({ user }) {
             </Chip>
           </div>
         </Row>
+
+        <Row
+          onClick={() => router.push("/categories")}
+          label="مدیریت دسته‌بندی‌ها"
+          iconBg="--brand-light"
+          icon={<TagIcon size={18} className="text-[color:var(--brand)]" />}
+          sub={<div className="text-[11px] text-[color:var(--muted)] mt-0.5">ساخت، ویرایش و حذف دسته‌های شخصی</div>}
+        />
 
         <Row
           onClick={() => setGuideOpen(true)}
