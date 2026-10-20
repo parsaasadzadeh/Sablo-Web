@@ -17,7 +17,7 @@ const perMonth = (price, months) => Math.round(price / months / 100) * 100;
 const PLANS = [
   { id: "sablo_monthly",  label: "ماهانه", price: 22000,  oldPrice: null,   period: "ماه",   months: 1,  badge: null,           highlight: null },
   { id: "sablo_biannual", label: "۶ ماهه", price: 119000, oldPrice: 132000, period: "۶ ماه", months: 6,  badge: null,           highlight: null },
-  { id: "sablo_annual",   label: "سالانه", price: 179000, oldPrice: 264000, period: "سال",   months: 12, badge: "بهترین ارزش", highlight: "۴ ماه رایگان 🎁" },
+  { id: "sablo_annual",   label: "سالانه", price: 169000, oldPrice: 264000, period: "سال",   months: 12, badge: "بهترین ارزش", highlight: "۴ ماه رایگان 🎁" },
 ];
 const DEFAULT_PLAN_ID = "sablo_annual";
 
